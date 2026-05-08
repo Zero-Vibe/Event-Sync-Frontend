@@ -2,7 +2,7 @@ import { defineConfig } from 'orval';
 
 export default defineConfig({
   eventsync: {
-    input: './OAS.yaml',
+    input: './src/docs/OAS.yaml',
     output: {
       mode: 'tags-split',
       target: './src/api/generated',
