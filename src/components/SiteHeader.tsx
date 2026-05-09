@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Sparkles } from "lucide-react";
-import { cn } from "../lib/utils";
+
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -20,10 +20,13 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          <Link href="/events" className={cn(linkClass, pathname === "/events" && "text-foreground font-semibold")}>
+          <Link href="/events" data-active={pathname.startsWith("/events")} className={`${linkClass} data-[active=true]:text-foreground data-[active=true]:font-semibold`}>
             Events
           </Link>
-          <Link href="/agenda" className={cn(linkClass, pathname === "/agenda" && "text-foreground font-semibold")}>
+          <Link href="/rooms" data-active={pathname.startsWith("/rooms")} className={`${linkClass} data-[active=true]:text-foreground data-[active=true]:font-semibold`}>
+            Rooms
+          </Link>
+          <Link href="/agenda" data-active={pathname === "/agenda"} className={`${linkClass} data-[active=true]:text-foreground data-[active=true]:font-semibold`}>
             My agenda
           </Link>
         </nav>

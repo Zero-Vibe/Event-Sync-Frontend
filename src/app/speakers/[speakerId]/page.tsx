@@ -2,9 +2,9 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Twitter, Github, Linkedin, Globe } from "lucide-react";
+import { ArrowLeft, XIcon, GitBranch, Link2Icon, Globe } from "lucide-react";
 import { SessionCard } from "@/src/components/SessionCard";
-import { sessionsForSpeaker ,getSpeaker} from '../../../lib/modck-data';
+import { sessionsForSpeaker, getSpeaker } from "@/src/data/queries";
 
 export default function SpeakerDetailPage({ params }: { params: Promise<{ speakerId: string }> }) {
   const { speakerId } = use(params);
@@ -23,11 +23,11 @@ export default function SpeakerDetailPage({ params }: { params: Promise<{ speake
   }
 
   const social = [
-    speaker.twitter && { icon: Twitter, label: speaker.twitter, href: `https://twitter.com/${speaker.twitter}` },
-    speaker.github && { icon: Github, label: speaker.github, href: `https://github.com/${speaker.github}` },
-    speaker.linkedin && { icon: Linkedin, label: speaker.linkedin, href: `https://linkedin.com/in/${speaker.linkedin}` },
+    speaker.twitter && { icon: XIcon, label: speaker.twitter, href: `https://twitter.com/${speaker.twitter}` },
+    speaker.github && { icon: GitBranch, label: speaker.github, href: `https://github.com/${speaker.github}` },
+    speaker.linkedin && { icon: Link2Icon, label: speaker.linkedin, href: `https://linkedin.com/in/${speaker.linkedin}` },
     speaker.website && { icon: Globe, label: speaker.website, href: `https://${speaker.website}` },
-  ].filter(Boolean) as { icon: typeof Twitter; label: string; href: string }[];
+  ].filter(Boolean) as { icon: typeof XIcon; label: string; href: string }[];
 
   return (
     <div className="min-h-screen bg-background text-foreground">

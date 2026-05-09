@@ -4,10 +4,10 @@ import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Share2, Users, Sparkles } from "lucide-react";
 import { LiveBadge } from "@/src/components/Livebadge";
-import { getSession, getEvent, getRoom, getSpeaker, formatTime, type Question } from "../../../../../lib/modck-data"
-import { useFavorites } from "@/src/lib/use-favorites";
-import { cn } from "@/src/lib/utils";
-
+import { getSession, getEvent, getRoom, getSpeaker } from "@/src/data/queries";
+import { formatTime } from "@/src/utils/format";
+import type { Question } from "@/src/types";
+import { useFavoritesStore } from "@/src/stores/favorite.store";
 export default function SessionDetailPage({ params }: { params: Promise<{ eventId: string; sessionId: string }> }) {
   const { eventId, sessionId } = use(params);
   const session = getSession(sessionId);
@@ -17,7 +17,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ eventI
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
-  const { has, toggle } = useFavorites();
+  const { isFavorite, toggle } = useFavoritesStore();
 
   if (!session || !event) {
     return (
@@ -32,7 +32,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ eventI
 
   const room = getRoom(session.roomId);
   const speakers = session.speakerIds.map(getSpeaker).filter((s): s is NonNullable<typeof s> => Boolean(s));
-  const isFav = has(session.id);
+  const isFav = isFavorite(session.id);
 
   const sortedQuestions = useMemo(
     () => [...questions].sort((a, b) => b.upvotes - a.upvotes),
@@ -98,12 +98,14 @@ export default function SessionDetailPage({ params }: { params: Promise<{ eventI
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => toggle(session.id)}
-                className={cn(
-                  "inline-flex h-10 items-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors",
-                  isFav ? "border-primary bg-primary/15 text-primary" : "border-border bg-card hover:bg-secondary"
-                )}
+                data-fav={isFav}
+                className="
+                  inline-flex h-10 items-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors
+                  border-border bg-card hover:bg-secondary
+                  data-[fav=true]:border-primary data-[fav=true]:bg-primary/15 data-[fav=true]:text-primary
+                "
               >
-                <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
+                <Heart data-fav={isFav} className="h-4 w-4 data-[fav=true]:fill-current" />
                 {isFav ? "Saved" : "Save to agenda"}
               </button>
               <button className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium hover:bg-secondary">
@@ -188,13 +190,16 @@ export default function SessionDetailPage({ params }: { params: Promise<{ eventI
                     <li key={q.id} className="group flex gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
                       <button
                         onClick={() => upvote(q.id)}
-                        className={cn(
-                          "flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-lg border text-xs font-semibold transition-colors",
-                          isUp ? "border-primary bg-primary/15 text-primary" : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                        )}
+                        data-active={isUp}
+                        className="
+                          flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-lg border text-xs font-semibold transition-colors
+                          border-border bg-secondary/40 text-muted-foreground
+                          hover:border-primary/40 hover:text-foreground
+                          data-[active=true]:border-primary data-[active=true]:bg-primary/15 data-[active=true]:text-primary
+                        "
                         aria-label="Upvote"
                       >
-                        <ArrowBigUp className={cn("h-5 w-5", isUp && "fill-current")} />
+                        <ArrowBigUp data-active={isUp} className="h-5 w-5 data-[active=true]:fill-current" />
                         {q.upvotes}
                       </button>
                       <div className="min-w-0 flex-1">
@@ -224,10 +229,8 @@ export default function SessionDetailPage({ params }: { params: Promise<{ eventI
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
               <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  session.capacityFilled >= 95 ? "bg-destructive" : session.capacityFilled >= 80 ? "bg-amber-500" : "bg-primary"
-                )}
+                data-fill={session.capacityFilled >= 95 ? "full" : session.capacityFilled >= 80 ? "warn" : "ok"}
+                className="h-full rounded-full transition-all data-[fill=full]:bg-destructive data-[fill=warn]:bg-amber-500 data-[fill=ok]:bg-primary"
                 style={{ width: `${session.capacityFilled}%` }}
               />
             </div>

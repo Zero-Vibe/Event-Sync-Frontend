@@ -6,8 +6,9 @@ import { CalendarDays, MapPin, Users, ArrowLeft } from "lucide-react";
 import { SessionCard } from "@/src/components/SessionCard";
 import { SpeakerCard } from "@/src/components/SpeakerCard";
 import { LiveBadge } from "@/src/components/Livebadge";
-import { getEvent, sessionsForEvent, rooms, speakers as allSpeakers, formatDateRange, formatTime, formatDate } from "../../../lib/modck-data";
-import { cn } from "@/src/lib/utils";
+import { getEvent, sessionsForEvent } from "@/src/data/queries";
+import { rooms, speakers as allSpeakers } from "@/src/data/mock";
+import { formatDateRange, formatTime, formatDate } from "@/src/utils/format";
 const tabs = ["Overview", "Schedule", "Speakers", "Rooms"] as const;
 type Tab = (typeof tabs)[number];
 
@@ -35,7 +36,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
     for (const s of eventSessions) {
       const day = formatDate(s.startTime);
       if (!map.has(day)) map.set(day, []);
-      map.get(day)!.push(s);
+      const dayList = map.get(day);
+      if (dayList) dayList.push(s);
     }
     for (const [, list] of map) list.sort((a, b) => a.startTime.localeCompare(b.startTime));
     return Array.from(map.entries());
@@ -51,15 +53,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       <section className="relative">
         <div className="relative h-[44vh] min-h-[320px] w-full overflow-hidden">
           <img src={event.cover} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         </div>
-        <div className="mx-auto -mt-32 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto -mt-32 max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> All events
           </Link>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {event.isLive && <LiveBadge label="Happening now" />}
-            <span className="rounded-full border border-border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
               {event.tracks.length} tracks · {eventSessions.length} sessions
             </span>
           </div>
@@ -77,17 +79,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ eventId:
       <div className="sticky top-16 z-30 mt-12 border-y border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-6 lg:px-8">
           {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                "relative h-12 px-4 text-sm font-medium transition-colors",
-                tab === t ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t}
-              {tab === t && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary" />}
-            </button>
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    data-active={tab === t}
+                    className="relative h-12 px-4 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground data-[active=true]:text-foreground"
+                  >
+                    {t}
+                    {tab === t && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary" />}
+                  </button>
           ))}
         </div>
       </div>

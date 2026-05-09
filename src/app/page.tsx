@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarClock, MessageSquareText, Radio, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { EventCard } from "../components/EventCard";
 import { LiveBadge } from "../components/Livebadge";
-import { events } from "../lib/modck-data";
+import { events } from "@/src/data/mock";
 
 const features = [
   { icon: CalendarClock, title: "Live schedules", desc: "Drag-and-drop agendas that sync to every attendee in real time, across web and mobile." },

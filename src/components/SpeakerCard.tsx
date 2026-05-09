@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Speaker } from "../lib/modck-data";
+import type { Speaker } from "../types";
 
 export function SpeakerCard({ speaker }: { speaker: Speaker }) {
   return (

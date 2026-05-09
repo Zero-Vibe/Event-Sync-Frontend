@@ -4,12 +4,13 @@ import { use } from "react";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Users } from "lucide-react";
 import { SessionCard } from "@/src/components/SessionCard";
-import { getRoom, sessionsForRoom, formatTime, formatDate} from '../../../lib/modck-data';
+import { getRoom, sessionsForRoom } from "@/src/data/queries";
+import { formatTime, formatDate } from "@/src/utils/format";
 
-export default function RoomDetailPage({ params }: { params: Promise<{ roomId: string }> }) {
-  const { roomId } = use(params);
-  const room = getRoom(roomId);
-  const sessions = sessionsForRoom(roomId).sort((a, b) => a.startTime.localeCompare(b.startTime));
+export default function RoomDetailPage({ params }: { params: Promise<{ roomsId: string }> }) {
+  const { roomsId } = use(params);
+  const room = getRoom(roomsId);
+  const sessions = sessionsForRoom(roomsId).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   if (!room) {
     return (
@@ -26,7 +27,8 @@ export default function RoomDetailPage({ params }: { params: Promise<{ roomId: s
   for (const s of sessions) {
     const k = formatDate(s.startTime);
     if (!byDay.has(k)) byDay.set(k, []);
-    byDay.get(k)!.push(s);
+    const list = byDay.get(k);
+    if (list) list.push(s);
   }
 
   return (

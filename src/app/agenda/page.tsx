@@ -3,20 +3,22 @@
 import Link from "next/link";
 import { CalendarHeart, Trash2 } from "lucide-react";
 import { SessionCard } from "@/src/components/SessionCard";
-import { sessions, formatDate } from "../../lib/modck-data";
-import { useFavorites } from "../../lib/use-favorites";
+import { sessions } from "@/src/data/mock";
+import { formatDate } from "@/src/utils/format";
+import { useFavoritesStore } from "@/src/stores/favorite.store";
 
 export default function AgendaPage() {
-  const { favorites, toggle } = useFavorites();
+  const { sessionIds, toggle } = useFavoritesStore();
   const saved = sessions
-    .filter((s) => favorites.includes(s.id))
+    .filter((s) => sessionIds.includes(s.id))
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const byDay = new Map<string, typeof saved>();
   for (const s of saved) {
     const k = formatDate(s.startTime);
     if (!byDay.has(k)) byDay.set(k, []);
-    byDay.get(k)!.push(s);
+    const list = byDay.get(k);
+    if (list) list.push(s);
   }
 
   return (

@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search, MapPin, CalendarRange } from "lucide-react";
 import { EventCard } from "@/src/components/EventCard";
-import { events } from "@/src/lib/modck-data";
-import { cn } from "@/src/lib/utils";
+import { events } from "@/src/data/mock";
 
 const cities = ["All cities", ...Array.from(new Set(events.map((e) => e.city)))];
 const dateFilters = [
@@ -67,16 +66,14 @@ export default function EventsPage() {
             <div className="flex items-center gap-1 rounded-lg bg-background/60 p-1 ring-1 ring-border/60">
               <CalendarRange className="ml-2 h-4 w-4 text-muted-foreground" />
               {dateFilters.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setDate(f.id)}
-                  className={cn(
-                    "h-9 rounded-md px-3 text-xs font-medium transition-colors",
-                    date === f.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {f.label}
-                </button>
+                  <button
+                    key={f.id}
+                    onClick={() => setDate(f.id)}
+                    data-active={date === f.id}
+                    className="h-9 rounded-md px-3 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                  >
+                    {f.label}
+                  </button>
               ))}
             </div>
           </div>

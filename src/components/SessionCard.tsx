@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Clock, MapPin } from "lucide-react";
-import { type Session, formatTime, getRoom, getSpeaker }from "../lib/modck-data";
+import type { Session } from "../types";
+import { formatTime } from "../utils/format";
+import { getRoom, getSpeaker } from "../data/queries";
 import { LiveBadge } from "./Livebadge";
-import { cn } from "../lib/utils";
 
 const trackColors: Record<string, string> = {
   Infrastructure: "bg-violet-500/15 text-violet-300 border-violet-500/30",
@@ -22,14 +23,15 @@ export function SessionCard({ session, showTime = true, compact = false }: { ses
   return (
     <Link
       href={`/events/${session.eventId}/sessions/${session.id}`}
-      className={cn(
-        "card-hover group relative flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-5",
-        session.isLive && "ring-1 ring-[color-mix(in_oklab,var(--live)_45%,transparent)]"
-      )}
+      data-live={session.isLive}
+      className="
+        card-hover group relative flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-5
+        data-[live=true]:ring-1 data-[live=true]:ring-[color-mix(in_oklab,var(--live)_45%,transparent)]
+      "
     >
       <div className="flex flex-wrap items-center gap-2">
         {session.isLive && <LiveBadge />}
-        <span className={cn("rounded-md border px-2 py-0.5 text-[11px] font-medium", trackClass)}>
+        <span className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${trackClass}`}>
           {session.track}
         </span>
         <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
@@ -37,7 +39,7 @@ export function SessionCard({ session, showTime = true, compact = false }: { ses
         </span>
       </div>
 
-      <h3 className={cn("font-semibold leading-snug tracking-tight", compact ? "text-base" : "text-lg")}>
+      <h3 data-compact={compact} className="font-semibold leading-snug tracking-tight data-[compact=true]:text-base data-[compact=false]:text-lg">
         {session.title}
       </h3>
 
