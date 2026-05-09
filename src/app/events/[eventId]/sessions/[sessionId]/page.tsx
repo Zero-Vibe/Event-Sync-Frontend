@@ -1,25 +1,25 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Clock, MapPin, Heart, ArrowBigUp, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Share2, Users, Sparkles } from "lucide-react";
 import { LiveBadge } from "@/src/components/Livebadge";
-import { SpeakerCard } from "@/src/components/SpeakerCard";
-import { getSession, getRoom, getSpeaker } from "@/src/data/queries";
+import { getSession, getEvent, getRoom, getSpeaker } from "@/src/data/queries";
 import { formatTime } from "@/src/utils/format";
 import type { Question } from "@/src/types";
-
-export default function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const session = getSession(id);
+import { useFavoritesStore } from "@/src/stores/favorite.store";
+export default function SessionDetailPage({ params }: { params: Promise<{ eventId: string; sessionId: string }> }) {
+  const { eventId, sessionId } = use(params);
+  const session = getSession(sessionId);
+  const event = getEvent(eventId);
 
   const [questions, setQuestions] = useState<Question[]>(session?.questions ?? []);
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
-  const [isFav, setIsFav] = useState(false);
+  const { isFavorite, toggle } = useFavoritesStore();
 
-  if (!session) {
+  if (!session || !event) {
     return (
       <div className="flex min-h-screen items-center justify-center text-center">
         <div>
@@ -32,6 +32,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 
   const room = getRoom(session.roomId);
   const speakers = session.speakerIds.map(getSpeaker).filter((s): s is NonNullable<typeof s> => Boolean(s));
+  const isFav = isFavorite(session.id);
 
   const sortedQuestions = useMemo(
     () => [...questions].sort((a, b) => b.upvotes - a.upvotes),
@@ -65,12 +66,13 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Hero */}
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="absolute inset-0 bg-radial-violet opacity-70" aria-hidden />
         <div className="absolute inset-0 bg-grid opacity-20" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> All events
+          <Link href={`/events/${event.id}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> {event.name}
           </Link>
           <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
@@ -87,40 +89,60 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
                     <MapPin className="h-4 w-4" />{room.name} · {room.floor}
                   </Link>
                 )}
+                <span className="inline-flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  {Math.round((session.capacityFilled / 100) * (room?.capacity ?? 0))} / {room?.capacity}
+                </span>
               </div>
             </div>
-            <button
-              onClick={() => setIsFav((f) => !f)}
-              data-fav={isFav}
-              className="
-                inline-flex h-10 items-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors
-                border-border bg-card hover:bg-secondary
-                data-[fav=true]:border-primary data-[fav=true]:bg-primary/15 data-[fav=true]:text-primary
-              "
-            >
-              <Heart data-fav={isFav} className="h-4 w-4 data-[fav=true]:fill-current" />
-              {isFav ? "Saved" : "Save to agenda"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => toggle(session.id)}
+                data-fav={isFav}
+                className="
+                  inline-flex h-10 items-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors
+                  border-border bg-card hover:bg-secondary
+                  data-[fav=true]:border-primary data-[fav=true]:bg-primary/15 data-[fav=true]:text-primary
+                "
+              >
+                <Heart data-fav={isFav} className="h-4 w-4 data-[fav=true]:fill-current" />
+                {isFav ? "Saved" : "Save to agenda"}
+              </button>
+              <button className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium hover:bg-secondary">
+                <Share2 className="h-4 w-4" /> Share
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Body */}
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
         <div className="space-y-12">
+          {/* Speakers */}
           <div>
             <h2 className="text-xl font-semibold tracking-tight">{speakers.length > 1 ? "Speakers" : "Speaker"}</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {speakers.map((s) => (
-                <SpeakerCard key={s.id} speaker={s} />
+                <Link key={s.id} href={`/speakers/${s.id}`} className="card-hover flex items-start gap-4 rounded-2xl border border-border bg-card p-5">
+                  <img src={s.avatar} alt={s.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-border" />
+                  <div className="min-w-0">
+                    <h3 className="font-semibold tracking-tight">{s.name}</h3>
+                    <p className="text-sm text-muted-foreground">{s.title}</p>
+                    <p className="text-sm text-primary">{s.company}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
 
+          {/* Description */}
           <div>
             <h2 className="text-xl font-semibold tracking-tight">About this session</h2>
             <p className="mt-4 leading-relaxed text-muted-foreground">{session.description}</p>
           </div>
 
+          {/* Q&A */}
           {session.isLive && (
             <div>
               <div className="flex items-center justify-between">
@@ -197,6 +219,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
           )}
         </div>
 
+        {/* Sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-border bg-card p-6">
             <h3 className="font-semibold">Capacity</h3>
