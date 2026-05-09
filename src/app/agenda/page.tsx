@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { CalendarHeart, Trash2 } from "lucide-react";
-import { SessionCard } from "@/components/SessionCard";
-import { sessions, formatDate } from "@/lib/mock-data";
-import { useFavorites } from "@/lib/use-favorites";
+import { SessionCard } from "@/src/components/SessionCard";
+import { sessions, formatDate } from "../../lib/modck-data";
+import { useFavorites } from "../../lib/use-favorites";
 
 export default function AgendaPage() {
   const { favorites, toggle } = useFavorites();

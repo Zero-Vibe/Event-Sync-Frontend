@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarDays, MapPin, Users } from "lucide-react";
 import type { EventItem } from "../lib/modck-data";
 import { formatDateRange } from "../lib/modck-data";
-import { LiveBadge } from "./LiveBadge";
+import { LiveBadge } from "./Livebadge";
 
 export function EventCard({ event }: { event: EventItem }) {
   return (
