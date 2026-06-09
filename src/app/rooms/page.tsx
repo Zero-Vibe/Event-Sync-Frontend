@@ -2,11 +2,36 @@
 
 import Link from 'next/link';
 import { useApi } from '@/src/hooks/useApi';
-import { getRooms } from '@/src/api/rooms';
+import { getRooms, getRoom } from '@/src/api/rooms';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
+import { useEffect, useState } from "react";
+import { Room } from "../../types"
+
+
 
 export default function RoomsPage() {
   const { data: rooms, loading, error } = useApi(getRooms);
+
+  const [roomDetails, setRoomDetails] = useState<Record<number, Room>>({});
+
+  useEffect(() => {
+    async function loadDetails() {
+      if (!rooms) return;
+
+      const details = await Promise.all(
+        rooms.map(async (room) => ({
+          id: room.id,
+          data: await getRoom(room.id),
+        }))
+      );
+
+      setRoomDetails(
+        Object.fromEntries(details.map(d => [d.id, d.data]))
+      );
+    }
+
+    loadDetails();
+  }, [rooms]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -33,7 +58,7 @@ export default function RoomsPage() {
               >
                 <h3 className="font-semibold">{r.name}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {r.sessions?.length ?? 0} sessions
+                  { roomDetails[r.id]?.sessions?.length ?? 0 } sessions
                 </p>
               </Link>
             ))}
