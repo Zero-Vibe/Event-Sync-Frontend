@@ -161,16 +161,16 @@ export default function SessionDetailPage({
                     {sp.pictureUrl ? (
                       <img
                         src={sp.pictureUrl}
-                        alt={sp.fullName ?? ''}
+                        alt={sp.firstName ?? ''}
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                        {sp.fullName?.[0] ?? '?'}
+                        {sp.firstName + " " + sp.lastName}
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-medium">{sp.fullName}</p>
+                      <p className="text-sm font-medium">{sp.firstName + " " + sp.lastName}</p>
                     </div>
                   </div>
                 ))}

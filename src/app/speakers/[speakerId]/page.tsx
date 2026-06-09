@@ -59,7 +59,7 @@ export default function SpeakerDetailPage({
               <h1 className="mt-1 text-3xl font-semibold tracking-tight">
                 {speaker.fullName}
               </h1>
-              {speaker.links && speaker.links.length > 0 && (
+              {/* {speaker.links && speaker.links.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {speaker.links.map((url) => (
                     <a
@@ -73,7 +73,7 @@ export default function SpeakerDetailPage({
                     </a>
                   ))}
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </div>

@@ -69,7 +69,7 @@ export function SessionCard({
               <img
                 key={s.id}
                 src={s.pictureUrl}
-                alt={s.fullName ?? ''}
+                alt={s.firstName ?? ''}
                 className="h-5 w-5 rounded-full border border-border object-cover"
               />
             ) : (
@@ -77,12 +77,12 @@ export function SessionCard({
                 key={s.id}
                 className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-muted text-[9px] font-medium"
               >
-                {s.fullName?.[0] ?? '?'}
+                {(s.firstName + " " + s.lastName)}
               </div>
             )
           )}
           <span className="text-xs text-muted-foreground">
-            {speakers.map((s) => s.fullName).join(', ')}
+            {speakers.map((s) => s.firstName).join(', ')}
           </span>
         </div>
       )}

@@ -10,7 +10,8 @@ export interface RoomCreate {
 
 export interface SpeakerSummary {
   id?: string;
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   pictureUrl?: string;
 }
 
