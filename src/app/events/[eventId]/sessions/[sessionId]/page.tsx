@@ -130,7 +130,7 @@ export default function SessionDetailPage({
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              {formatTime(session.starttime)} – {formatTime(session.endtime)}
+              {formatTime(session.startTime)} – {formatTime(session.endTime)}
             </span>
             {session.room && (
               <Link
@@ -158,9 +158,9 @@ export default function SessionDetailPage({
                     key={sp.id}
                     className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4"
                   >
-                    {sp.profilePicture ? (
+                    {sp.pictureUrl ? (
                       <img
-                        src={sp.profilePicture}
+                        src={sp.pictureUrl}
                         alt={sp.fullName ?? ''}
                         className="h-10 w-10 rounded-full object-cover"
                       />

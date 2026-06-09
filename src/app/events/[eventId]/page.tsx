@@ -49,7 +49,7 @@ export default function EventDetailPage({
 
   const groupedByDay = new Map<string, typeof sessions>();
   for (const s of sessions ?? []) {
-    const day = formatDate(s.starttime);
+    const day = formatDate(s.startTime);
     if (!groupedByDay.has(day)) groupedByDay.set(day, []);
     groupedByDay.get(day)!.push(s);
   }
@@ -79,7 +79,7 @@ export default function EventDetailPage({
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               <CalendarDays className="h-4 w-4" />
-              {formatDateRange(event.start_date, event.end_date)}
+              {formatDateRange(event.startDateTime, event.endDateTime)}
             </span>
             <span className="inline-flex items-center gap-2">
               <MapPin className="h-4 w-4" />
@@ -190,9 +190,9 @@ export default function EventDetailPage({
                   key={s.id}
                   className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4"
                 >
-                  {s.profilePicture ? (
+                  {s.pictureUrl ? (
                     <img
-                      src={s.profilePicture}
+                      src={s.pictureUrl}
                       alt={s.fullName ?? ''}
                       className="h-10 w-10 rounded-full object-cover"
                     />

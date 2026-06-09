@@ -16,7 +16,7 @@ export function EventCard({ event }: { event: Event }) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <CalendarDays className="h-3.5 w-3.5" />
-            {formatDateRange(event.start_date, event.end_date)}
+            {formatDateRange(event.startDateTime, event.endDateTime)}
           </div>
           {hasLive && <LiveBadge />}
         </div>

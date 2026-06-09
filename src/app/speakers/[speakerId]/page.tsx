@@ -43,9 +43,9 @@ export default function SpeakerDetailPage({
           </Link>
 
           <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
-            {speaker.profilePicture ? (
+            {speaker.pictureUrl ? (
               <img
-                src={speaker.profilePicture}
+                src={speaker.pictureUrl}
                 alt={speaker.fullName}
                 className="h-20 w-20 rounded-xl object-cover"
               />
@@ -59,9 +59,9 @@ export default function SpeakerDetailPage({
               <h1 className="mt-1 text-3xl font-semibold tracking-tight">
                 {speaker.fullName}
               </h1>
-              {speaker.externalLinks && speaker.externalLinks.length > 0 && (
+              {speaker.links && speaker.links.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {speaker.externalLinks.map((url) => (
+                  {speaker.links.map((url) => (
                     <a
                       key={url}
                       href={url}

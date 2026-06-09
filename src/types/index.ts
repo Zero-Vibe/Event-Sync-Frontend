@@ -11,30 +11,31 @@ export interface RoomCreate {
 export interface SpeakerSummary {
   id?: string;
   fullName?: string;
-  profilePicture?: string;
+  pictureUrl?: string;
 }
 
 export interface Speaker {
   id: string;
-  fullName: string;
-  profilePicture?: string;
+  firstName: string;
+  lastName: string;
+  pictureUrl?: string;
   biography?: string;
-  externalLinks?: string[];
+  links?: string[];
   sessions?: SessionSummary[];
 }
 
 export interface SpeakerCreate {
   fullName: string;
-  profilePicture?: string;
+  pictureUrl?: string;
   biography?: string;
-  externalLinks?: string[];
+  links?: string[];
 }
 
 export interface SessionSummary {
   id?: string;
   title?: string;
-  starttime?: string;
-  endtime?: string;
+  startTime?: string;
+  endTime?: string;
   isLive?: boolean;
   room?: Room;
   speakers?: SpeakerSummary[];
@@ -44,8 +45,8 @@ export interface Session {
   id: string;
   title: string;
   description?: string;
-  starttime: string;
-  endtime: string;
+  startTime: string;
+  endTime: string;
   capacity?: number;
   isLive?: boolean;
   room: Room;
@@ -56,8 +57,8 @@ export interface Session {
 export interface SessionCreate {
   title: string;
   description?: string;
-  starttime: string;
-  endtime: string;
+  startTime: string;
+  endTime: string;
   capacity?: number;
   roomId: string;
   speakerIds: string[];
@@ -67,8 +68,8 @@ export interface Event {
   id: string;
   title: string;
   description?: string;
-  start_date: string;
-  end_date: string;
+  startDateTime: string;
+  endDateTime: string;
   location: string;
   sessions?: SessionSummary[];
 }
@@ -76,8 +77,8 @@ export interface Event {
 export interface EventCreate {
   title: string;
   description?: string;
-  start_date: string;
-  end_date: string;
+  startDateTime: string;
+  endDateTime: string;
   location: string;
 }
 

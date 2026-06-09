@@ -7,7 +7,7 @@ import { LiveBadge } from './LiveBadge';
 type AnySession = Session | SessionSummary;
 
 function isFullSession(s: AnySession): s is Session {
-  return 'starttime' in s && typeof (s as Session).starttime === 'string';
+  return 'startTime' in s && typeof (s as Session).startTime === 'string';
 }
 
 export function SessionCard({
@@ -25,8 +25,8 @@ export function SessionCard({
   const room = session.room;
   const speakers = session.speakers ?? [];
 
-  const starttime = isFullSession(session) ? session.starttime : session.starttime;
-  const endtime = isFullSession(session) ? session.endtime : session.endtime;
+  const startTime = isFullSession(session) ? session.startTime : session.startTime;
+  const endTime = isFullSession(session) ? session.endTime : session.endTime;
   const description = isFullSession(session) ? session.description : undefined;
 
   return (
@@ -48,10 +48,10 @@ export function SessionCard({
       )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-        {starttime && endtime && (
+        {startTime && endTime && (
           <span className="inline-flex items-center gap-1.5">
             <Clock className="h-3 w-3" />
-            {formatTime(starttime)} – {formatTime(endtime)}
+            {formatTime(startTime)} – {formatTime(endTime)}
           </span>
         )}
         {room && (
@@ -65,10 +65,10 @@ export function SessionCard({
       {speakers.length > 0 && (
         <div className="flex items-center gap-2 pt-1">
           {speakers.slice(0, 3).map((s) =>
-            s.profilePicture ? (
+            s.pictureUrl ? (
               <img
                 key={s.id}
-                src={s.profilePicture}
+                src={s.pictureUrl}
                 alt={s.fullName ?? ''}
                 className="h-5 w-5 rounded-full border border-border object-cover"
               />

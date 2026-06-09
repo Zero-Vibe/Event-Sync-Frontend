@@ -30,8 +30,8 @@ export interface Event {
   id: string;
   title: string;
   description?: string;
-  start_date: string;
-  end_date: string;
+  startDateTime: string;
+  endDateTime: string;
   location: string;
   sessions?: SessionSummary[];
 }
@@ -39,8 +39,8 @@ export interface Event {
 export interface EventCreate {
   title: string;
   description?: string;
-  start_date: string;
-  end_date: string;
+  startDateTime: string;
+  endDateTime: string;
   location: string;
 }
 

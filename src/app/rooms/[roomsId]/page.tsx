@@ -32,13 +32,13 @@ export default function RoomDetailPage({
 
   const sessions = room.sessions ?? [];
   const sorted = [...sessions].sort((a, b) =>
-    (a.starttime ?? '').localeCompare(b.starttime ?? '')
+    (a.startTime ?? '').localeCompare(b.startTime ?? '')
   );
 
   const byDay = new Map<string, SessionSummary[]>();
   for (const s of sorted) {
-    if (!s.starttime) continue;
-    const day = formatDate(s.starttime);
+    if (!s.startTime) continue;
+    const day = formatDate(s.startTime);
     if (!byDay.has(day)) byDay.set(day, []);
     byDay.get(day)!.push(s);
   }
