@@ -1,217 +1,259 @@
-"use client";
+'use client';
 
-import { use, useMemo, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Share2, Users, Sparkles } from "lucide-react";
-import { LiveBadge } from "@/src/components/Livebadge";
-import { getSession, getEvent, getRoom, getSpeaker } from "@/src/data/queries";
-import { formatTime } from "@/src/utils/format";
-import type { Question } from "@/src/types";
-import { useFavoritesStore } from "@/src/stores/favorite.store";
-export default function SessionDetailPage({ params }: { params: Promise<{ eventId: string; sessionId: string }> }) {
+import { use, useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send } from 'lucide-react';
+import { LiveBadge } from '@/src/components/LiveBadge';
+import { PageLoader, ErrorMessage } from '@/src/components/ui';
+import { useApi } from '@/src/hooks/useApi';
+import { getSession } from '@/src/api/sessions';
+import { getEvent } from '@/src/api/events';
+import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions';
+import { formatTime } from '@/src/utils/format';
+import type { Question } from '@/src/types';
+
+export default function SessionDetailPage({
+  params,
+}: {
+  params: Promise<{ eventId: string; sessionId: string }>;
+}) {
   const { eventId, sessionId } = use(params);
-  const session = getSession(sessionId);
-  const event = getEvent(eventId);
 
-  const [questions, setQuestions] = useState<Question[]>(session?.questions ?? []);
-  const [text, setText] = useState("");
-  const [name, setName] = useState("");
-  const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
-  const { isFavorite, toggle } = useFavoritesStore();
+  const { data: event } = useApi(() => getEvent(eventId), [eventId]);
+  const { data: session, loading, error } = useApi(
+    () => getSession(eventId, sessionId),
+    [eventId, sessionId]
+  );
 
-  if (!session || !event) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-center">
-        <div>
-          <h1 className="text-3xl font-semibold">Session not found</h1>
-          <Link href="/events" className="mt-4 inline-block text-primary hover:underline">← Back</Link>
-        </div>
-      </div>
-    );
-  }
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [text, setText] = useState('');
+  const [author, setAuthor] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const room = getRoom(session.roomId);
-  const speakers = session.speakerIds.map(getSpeaker).filter((s): s is NonNullable<typeof s> => Boolean(s));
-  const isFav = isFavorite(session.id);
+  const { data: fetchedQuestions } = useApi(
+    () =>
+      session?.isLive
+        ? getQuestions(eventId, sessionId)
+        : Promise.resolve([] as Question[]),
+    [eventId, sessionId, session?.isLive]
+  );
+
+  useEffect(() => {
+    if (fetchedQuestions) setQuestions(fetchedQuestions);
+  }, [fetchedQuestions]);
 
   const sortedQuestions = useMemo(
     () => [...questions].sort((a, b) => b.upvotes - a.upvotes),
     [questions]
   );
 
-  const submit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    const newQ: Question = {
-      id: `q-${Date.now()}`,
-      author: name.trim() || "Anonymous",
-      text: text.trim(),
-      upvotes: 1,
-      createdAt: new Date().toISOString(),
-    };
-    setQuestions((qs) => [...qs, newQ]);
-    setUpvoted((s) => new Set(s).add(newQ.id));
-    setText("");
+    if (!text.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      const q = await createQuestion(eventId, sessionId, {
+        content: text.trim(),
+        authorName: author.trim() || null,
+      });
+      setQuestions((prev) => [...prev, q]);
+      setVotedIds((prev) => new Set(prev).add(q.id));
+      setText('');
+    } catch {
+      // fall through
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const upvote = (id: string) => {
-    const isUp = upvoted.has(id);
-    setQuestions((qs) => qs.map((q) => q.id === id ? { ...q, upvotes: q.upvotes + (isUp ? -1 : 1) } : q));
-    setUpvoted((s) => {
-      const next = new Set(s);
-      if (isUp) next.delete(id); else next.add(id);
+  const handleVote = async (qId: string) => {
+    const isVoted = votedIds.has(qId);
+    setVotedIds((prev) => {
+      const next = new Set(prev);
+      if (isVoted) next.delete(qId);
+      else next.add(qId);
       return next;
     });
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === qId ? { ...q, upvotes: q.upvotes + (isVoted ? -1 : 1) } : q
+      )
+    );
+    try {
+      await voteQuestion(eventId, sessionId, qId, !isVoted);
+    } catch {
+      // revert optimistic update
+      setVotedIds((prev) => {
+        const next = new Set(prev);
+        if (isVoted) next.add(qId);
+        else next.delete(qId);
+        return next;
+      });
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === qId ? { ...q, upvotes: q.upvotes + (isVoted ? 1 : -1) } : q
+        )
+      );
+    }
   };
+
+  if (loading) return <PageLoader />;
+  if (error)
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <ErrorMessage message={error} />
+      </div>
+    );
+  if (!session) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-70" aria-hidden />
-        <div className="absolute inset-0 bg-grid opacity-20" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <Link href={`/events/${event.id}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> {event.name}
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+          <Link
+            href={`/events/${eventId}`}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {event?.title ?? 'Back'}
           </Link>
-          <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                {session.isLive && <LiveBadge />}
-                <span className="rounded-full border border-border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">{session.track}</span>
-                <span className="rounded-full border border-border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">{session.level}</span>
-              </div>
-              <h1 className="mt-5 max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">{session.title}</h1>
-              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4" />{formatTime(session.startTime)} – {formatTime(session.endTime)}</span>
-                {room && (
-                  <Link href={`/rooms/${room.id}`} className="inline-flex items-center gap-2 hover:text-foreground">
-                    <MapPin className="h-4 w-4" />{room.name} · {room.floor}
-                  </Link>
-                )}
-                <span className="inline-flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  {Math.round((session.capacityFilled / 100) * (room?.capacity ?? 0))} / {room?.capacity}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => toggle(session.id)}
-                data-fav={isFav}
-                className="
-                  inline-flex h-10 items-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors
-                  border-border bg-card hover:bg-secondary
-                  data-[fav=true]:border-primary data-[fav=true]:bg-primary/15 data-[fav=true]:text-primary
-                "
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            {session.isLive && <LiveBadge />}
+          </div>
+
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            {session.title}
+          </h1>
+
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              {formatTime(session.starttime)} – {formatTime(session.endtime)}
+            </span>
+            {session.room && (
+              <Link
+                href={`/rooms/${session.room.id}`}
+                className="inline-flex items-center gap-2 hover:text-foreground"
               >
-                <Heart data-fav={isFav} className="h-4 w-4 data-[fav=true]:fill-current" />
-                {isFav ? "Saved" : "Save to agenda"}
-              </button>
-              <button className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium hover:bg-secondary">
-                <Share2 className="h-4 w-4" /> Share
-              </button>
-            </div>
+                <MapPin className="h-4 w-4" />
+                {session.room.name}
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Body */}
-      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
-        <div className="space-y-12">
-          {/* Speakers */}
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">{speakers.length > 1 ? "Speakers" : "Speaker"}</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {speakers.map((s) => (
-                <Link key={s.id} href={`/speakers/${s.id}`} className="card-hover flex items-start gap-4 rounded-2xl border border-border bg-card p-5">
-                  <img src={s.avatar} alt={s.name} className="h-16 w-16 rounded-full object-cover ring-2 ring-border" />
-                  <div className="min-w-0">
-                    <h3 className="font-semibold tracking-tight">{s.name}</h3>
-                    <p className="text-sm text-muted-foreground">{s.title}</p>
-                    <p className="text-sm text-primary">{s.company}</p>
+      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_340px] lg:px-8">
+        <div className="space-y-10">
+          {session.speakers.length > 0 && (
+            <div>
+              <h2 className="text-base font-semibold">
+                {session.speakers.length > 1 ? 'Speakers' : 'Speaker'}
+              </h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {session.speakers.map((sp) => (
+                  <div
+                    key={sp.id}
+                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4"
+                  >
+                    {sp.profilePicture ? (
+                      <img
+                        src={sp.profilePicture}
+                        alt={sp.fullName ?? ''}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                        {sp.fullName?.[0] ?? '?'}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">{sp.fullName}</p>
+                    </div>
                   </div>
-                </Link>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Description */}
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">About this session</h2>
-            <p className="mt-4 leading-relaxed text-muted-foreground">{session.description}</p>
-          </div>
+          {session.description && (
+            <div>
+              <h2 className="text-base font-semibold">About</h2>
+              <p className="mt-3 leading-relaxed text-sm text-muted-foreground">
+                {session.description}
+              </p>
+            </div>
+          )}
 
-          {/* Q&A */}
           {session.isLive && (
             <div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold tracking-tight">Live Q&amp;A</h2>
-                    <p className="text-xs text-muted-foreground">{questions.length} questions · sorted by upvotes</p>
-                  </div>
-                </div>
-                <LiveBadge label="Open" />
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold">Live Q&amp;A</h2>
+                <span className="text-xs text-muted-foreground">
+                  {questions.length} questions
+                </span>
               </div>
 
-              <form onSubmit={submit} className="mt-5 rounded-2xl border border-border bg-card p-4">
+              <form onSubmit={handleSubmit} className="mt-4 rounded-xl border border-border bg-card p-4">
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Ask the speaker a question…"
+                  placeholder="Ask a question..."
                   rows={3}
                   className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
-                <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border/60 pt-3">
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
                   <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
                     placeholder="Your name (optional)"
-                    className="h-9 flex-1 min-w-[160px] rounded-md bg-secondary/50 px-3 text-sm outline-none ring-1 ring-border focus:ring-2 focus:ring-primary"
+                    className="h-8 flex-1 min-w-[140px] rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
                   />
                   <button
                     type="submit"
-                    disabled={!text.trim()}
-                    className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-50 hover:brightness-110"
+                    disabled={!text.trim() || submitting}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40 hover:opacity-80"
                   >
-                    <Send className="h-4 w-4" /> Post
+                    <Send className="h-3.5 w-3.5" />
+                    Post
                   </button>
                 </div>
               </form>
 
-              <ul className="mt-6 space-y-3">
+              <ul className="mt-4 space-y-2.5">
                 {sortedQuestions.map((q) => {
-                  const isUp = upvoted.has(q.id);
+                  const isVoted = votedIds.has(q.id);
                   return (
-                    <li key={q.id} className="group flex gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+                    <li
+                      key={q.id}
+                      className="flex gap-3 rounded-xl border border-border/70 bg-card p-4"
+                    >
                       <button
-                        onClick={() => upvote(q.id)}
-                        data-active={isUp}
-                        className="
-                          flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-lg border text-xs font-semibold transition-colors
-                          border-border bg-secondary/40 text-muted-foreground
-                          hover:border-primary/40 hover:text-foreground
-                          data-[active=true]:border-primary data-[active=true]:bg-primary/15 data-[active=true]:text-primary
-                        "
+                        onClick={() => handleVote(q.id)}
+                        data-active={isVoted}
+                        className="flex h-12 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-border/70 text-xs font-medium transition-colors hover:border-border data-[active=true]:border-foreground data-[active=true]:bg-foreground/5 data-[active=true]:text-foreground"
                         aria-label="Upvote"
                       >
-                        <ArrowBigUp data-active={isUp} className="h-5 w-5 data-[active=true]:fill-current" />
+                        <ArrowBigUp
+                          data-active={isVoted}
+                          className="h-4 w-4 data-[active=true]:fill-current"
+                        />
                         {q.upvotes}
                       </button>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm leading-relaxed text-foreground">{q.text}</p>
-                        <p className="mt-2 text-xs text-muted-foreground">— {q.author}</p>
+                        <p className="text-sm leading-relaxed">{q.content}</p>
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          {q.authorName ?? 'Anonymous'}
+                        </p>
                       </div>
                     </li>
                   );
                 })}
                 {sortedQuestions.length === 0 && (
-                  <li className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-                    Be the first to ask a question.
+                  <li className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                    No questions yet.
                   </li>
                 )}
               </ul>
@@ -219,32 +261,26 @@ export default function SessionDetailPage({ params }: { params: Promise<{ eventI
           )}
         </div>
 
-        {/* Sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h3 className="font-semibold">Capacity</h3>
-            <div className="mt-3 flex items-end justify-between">
-              <span className="text-3xl font-semibold tracking-tight">{session.capacityFilled}%</span>
-              <span className="text-xs text-muted-foreground">{room?.capacity} max</span>
-            </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
-              <div
-                data-fill={session.capacityFilled >= 95 ? "full" : session.capacityFilled >= 80 ? "warn" : "ok"}
-                className="h-full rounded-full transition-all data-[fill=full]:bg-destructive data-[fill=warn]:bg-amber-500 data-[fill=ok]:bg-primary"
-                style={{ width: `${session.capacityFilled}%` }}
-              />
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              {session.capacityFilled >= 95 ? "Almost full — arrive early." : session.capacityFilled >= 80 ? "Filling up fast." : "Plenty of seats available."}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h3 className="font-semibold">Details</h3>
-            <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex justify-between"><dt className="text-muted-foreground">Track</dt><dd>{session.track}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Level</dt><dd>{session.level}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Room</dt><dd>{room?.name}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Floor</dt><dd>{room?.floor}</dd></div>
+          <div className="rounded-xl border border-border/70 bg-card p-5">
+            <h3 className="text-sm font-semibold">Details</h3>
+            <dl className="mt-3 space-y-2 text-sm">
+              {session.room && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Room</dt>
+                  <dd>{session.room.name}</dd>
+                </div>
+              )}
+              {session.capacity && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Capacity</dt>
+                  <dd>{session.capacity}</dd>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Status</dt>
+                <dd>{session.isLive ? 'Live now' : 'Not live'}</dd>
+              </div>
             </dl>
           </div>
         </aside>

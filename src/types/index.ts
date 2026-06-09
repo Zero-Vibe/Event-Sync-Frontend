@@ -1,62 +1,118 @@
-export interface Speaker {
-  id: string;
-  name: string;
-  title: string;
-  company: string;
-  bio: string;
-  avatar: string;
-  twitter?: string;
-  github?: string;
-  linkedin?: string;
-  website?: string;
-  sessionIds: string[];
-}
-
 export interface Room {
   id: string;
   name: string;
-  capacity: number;
-  floor: string;
-  color: string;
+  sessions?: SessionSummary[];
 }
 
-export interface Question {
+export interface RoomCreate {
+  name: string;
+}
+
+export interface SpeakerSummary {
+  id?: string;
+  fullName?: string;
+  profilePicture?: string;
+}
+
+export interface Speaker {
   id: string;
-  author: string;
-  text: string;
-  upvotes: number;
-  createdAt: string;
+  fullName: string;
+  profilePicture?: string;
+  biography?: string;
+  externalLinks?: string[];
+  sessions?: SessionSummary[];
+}
+
+export interface SpeakerCreate {
+  fullName: string;
+  profilePicture?: string;
+  biography?: string;
+  externalLinks?: string[];
+}
+
+export interface SessionSummary {
+  id?: string;
+  title?: string;
+  starttime?: string;
+  endtime?: string;
+  isLive?: boolean;
+  room?: Room;
+  speakers?: SpeakerSummary[];
 }
 
 export interface Session {
   id: string;
-  eventId: string;
   title: string;
-  description: string;
-  speakerIds: string[];
+  description?: string;
+  starttime: string;
+  endtime: string;
+  capacity?: number;
+  isLive?: boolean;
+  room: Room;
+  speakers: SpeakerSummary[];
+  eventId: string;
+}
+
+export interface SessionCreate {
+  title: string;
+  description?: string;
+  starttime: string;
+  endtime: string;
+  capacity?: number;
   roomId: string;
-  startTime: string;
-  endTime: string;
-  track: string;
-  level: Level;
-  isLive?: boolean;
-  capacityFilled: number;
-  questions?: Question[];
+  speakerIds: string[];
 }
 
-export interface EventItem {
+export interface Event {
   id: string;
-  name: string;
-  tagline: string;
-  description: string;
-  startDate: string;
-  endDate: string;
+  title: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
   location: string;
-  city: string;
-  cover: string;
-  attendees: number;
-  tracks: string[];
-  isLive?: boolean;
+  sessions?: SessionSummary[];
 }
 
-export type Level = "Beginner" | "Intermediate" | "Advanced";
+export interface EventCreate {
+  title: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+}
+
+export interface Question {
+  id: string;
+  content: string;
+  authorName?: string | null;
+  upvotes: number;
+  createdAt: string;
+  sessionId: string;
+}
+
+export interface QuestionCreate {
+  content: string;
+  authorName?: string | null;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface LoginResponse {
+  accessToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
+}
+
+export interface ApiError {
+  code: number;
+  message: string;
+}

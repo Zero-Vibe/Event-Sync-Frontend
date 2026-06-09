@@ -4,9 +4,8 @@ export async function customFetch<T>(
 ): Promise<T> {
   const baseURL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
-  const token = typeof window !== 'undefined'
-    ? localStorage.getItem('access_token')
-    : null;
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
   const response = await fetch(`${baseURL}${url}`, {
     ...options,
