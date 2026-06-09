@@ -154,9 +154,10 @@ export default function SessionDetailPage({
               </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {session.speakers.map((sp) => (
-                  <div
+                  <Link
                     key={sp.id}
-                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4"
+                    href={`/speakers/${sp.id}`}
+                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-accent/40"
                   >
                     {sp.pictureUrl ? (
                       <img
@@ -172,7 +173,7 @@ export default function SessionDetailPage({
                     <div>
                       <p className="text-sm font-medium">{sp.firstName + " " + sp.lastName}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

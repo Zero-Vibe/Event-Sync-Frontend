@@ -1,14 +1,41 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarHeart, Trash2 } from "lucide-react";
 import { SessionCard } from "@/src/components/SessionCard";
-import { sessions } from "@/src/data/mock";
 import { formatDate } from "@/src/utils/format";
 import { useFavoritesStore } from "@/src/stores/favorite.store";
+import { Session } from "../../types/index";
+import { getSessions } from "@/src/api/sessions"; 
+import { PageLoader, ErrorMessage } from "@/src/components/ui";
 
-export default function AgendaPage() {
+interface AgendaPageProps {
+  eventId: string;
+}
+
+export default function AgendaPage({ eventId }: AgendaPageProps) {
   const { sessionIds, toggle } = useFavoritesStore();
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchSessions() {
+      try {
+        setIsLoading(true);
+        const data = await getSessions(eventId);
+        setSessions(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchSessions();
+  }, [eventId]);
+
   const saved = sessions
     .filter((s) => sessionIds.includes(s.id))
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -33,7 +60,15 @@ export default function AgendaPage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        {saved.length === 0 ? (
+        {isLoading && <PageLoader />}
+
+        {!isLoading && error && (
+          <div className="mx-auto max-w-md">
+            <ErrorMessage message={error} />
+          </div>
+        )}
+
+        {!isLoading && !error && saved.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-16 text-center">
             <CalendarHeart className="mx-auto h-10 w-10 text-muted-foreground" />
             <h2 className="mt-4 text-lg font-semibold">No sessions saved yet</h2>
@@ -42,7 +77,9 @@ export default function AgendaPage() {
               Browse events
             </Link>
           </div>
-        ) : (
+        )}
+
+        {!isLoading && !error && saved.length > 0 && (
           <div className="space-y-12">
             {Array.from(byDay.entries()).map(([day, list]) => (
               <div key={day}>

@@ -186,23 +186,24 @@ export default function EventDetailPage({
             )}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {allSpeakers.map((s) => (
-                <div
+                <Link
                   key={s.id}
-                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4"
+                  href={`/speakers/${s.id}`}
+                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-accent/40"
                 >
                   {s.pictureUrl ? (
                     <img
                       src={s.pictureUrl}
-                      alt={s.fullName ?? ''}
+                      alt={s.firstName ?? ''}
                       className="h-10 w-10 rounded-full object-cover"
                     />
                   ) : (
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                      {s.fullName?.[0] ?? '?'}
+                      {s.firstName + " " + s.lastName}
                     </div>
                   )}
-                  <p className="text-sm font-medium">{s.fullName}</p>
-                </div>
+                  <p className="text-sm font-medium">{s.firstName + " " + s.lastName}</p>
+                </Link>
               ))}
             </div>
           </div>
