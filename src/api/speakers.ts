@@ -1,4 +1,4 @@
-import type { Speaker, SpeakerCreate, SpeakerSummary } from '../../types';
+import type { Speaker, SpeakerCreate, SpeakerSummary } from '../types/index';
 import { customFetch } from './client';
 
 export const getSpeakers = (): Promise<SpeakerSummary[]> =>

@@ -46,34 +46,34 @@ export default function SpeakerDetailPage({
             {speaker.pictureUrl ? (
               <img
                 src={speaker.pictureUrl}
-                alt={speaker.fullName}
+                alt={speaker.firstName}
                 className="h-20 w-20 rounded-xl object-cover"
               />
             ) : (
               <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-muted text-2xl font-semibold">
-                {speaker.fullName[0]}
+                {speaker.firstName + " " + speaker.lastName}
               </div>
             )}
             <div>
               <p className="text-sm text-muted-foreground">Speaker</p>
               <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-                {speaker.fullName}
+                {speaker.firstName + " " + speaker.lastName}
               </h1>
-              {/* {speaker.links && speaker.links.length > 0 && (
+              {speaker.links && speaker.links.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {speaker.links.map((url) => (
+                  {speaker.links.map((link) => (
                     <a
-                      key={url}
-                      href={url}
+                      key={link.id}
+                      href={link.url}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      {new URL(url).hostname}
+                      {link.label || link.platform}
                     </a>
                   ))}
                 </div>
-              )} */}
+              )}
             </div>
           </div>
         </div>

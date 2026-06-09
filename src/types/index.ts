@@ -15,14 +15,22 @@ export interface SpeakerSummary {
   pictureUrl?: string;
 }
 
+export interface SpeakerLink {
+  id: string;
+  platform: string;
+  url: string;
+  label: string;
+  speakerId: string;
+}
+
 export interface Speaker {
   id: string;
   firstName: string;
   lastName: string;
   pictureUrl?: string;
   biography?: string;
-  links?: string[];
-  sessions?: SessionSummary[];
+  links: SpeakerLink[];
+  sessions?: Session[];
 }
 
 export interface SpeakerCreate {

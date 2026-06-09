@@ -1,4 +1,4 @@
-import type { Event, EventCreate } from '../../types';
+import type { Event, EventCreate } from '../types/index';
 import { customFetch } from './client';
 
 export const getEvents = (): Promise<Event[]> =>

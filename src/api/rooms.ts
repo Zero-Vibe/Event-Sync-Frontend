@@ -1,4 +1,4 @@
-import type { Room, RoomCreate } from '../../types';
+import type { Room, RoomCreate } from '../types/index';
 import { customFetch } from './client';
 
 export const getRooms = (): Promise<Room[]> =>

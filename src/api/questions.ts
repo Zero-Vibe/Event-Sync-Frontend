@@ -1,4 +1,4 @@
-import type { Question, QuestionCreate } from '../../types';
+import type { Question, QuestionCreate } from '../types/index';
 import { customFetch } from './client';
 
 export const getQuestions = (eventId: string, sessionId: string): Promise<Question[]> =>

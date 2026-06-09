@@ -1,4 +1,4 @@
-import type { Session, SessionCreate } from '../../types';
+import type { Session, SessionCreate } from '../types/index';
 import { customFetch } from './client';
 
 export const getSessions = (

@@ -1,4 +1,4 @@
-import type { LoginRequest, LoginResponse, RegisterRequest } from '../../types';
+import type { LoginRequest, LoginResponse, RegisterRequest } from '../types/index';
 import { customFetch } from './client';
 
 export const login = (data: LoginRequest): Promise<LoginResponse> =>
