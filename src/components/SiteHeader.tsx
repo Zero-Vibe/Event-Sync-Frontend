@@ -32,6 +32,7 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-6 md:flex">
           {navItem('/events', 'Events')}
           {navItem('/rooms', 'Rooms')}
+          {navItem('/agenda', 'Agenda')}
         </nav>
 
         <Link
