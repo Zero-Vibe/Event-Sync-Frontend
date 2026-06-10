@@ -28,13 +28,12 @@ export default function SessionDetailPage({
 
   const live = statusIsLive(session?.status);
 
-  const [questions, setQuestions]   = useState<Question[]>([]);
-  const [votedIds, setVotedIds]     = useState<Set<string>>(new Set());
-  const [text, setText]             = useState('');
-  const [author, setAuthor]         = useState('');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [text, setText] = useState('');
+  const [author, setAuthor] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch questions only when session is live
   const { data: fetchedQuestions } = useApi(
     () =>
       live
@@ -118,9 +117,9 @@ export default function SessionDetailPage({
   if (!session) return null;
 
   const statusLabel =
-    session.status === SessionStatus.LIVE    ? 'Live now'   :
-    session.status === SessionStatus.ENDED   ? 'Ended'      :
-    session.status === SessionStatus.PUBLISHED ? 'Upcoming' : '–';
+    session.status === SessionStatus.LIVE ? 'Live now' :
+      session.status === SessionStatus.ENDED ? 'Ended' :
+        session.status === SessionStatus.PUBLISHED ? 'Upcoming' : '–';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
