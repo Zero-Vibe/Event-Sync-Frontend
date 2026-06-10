@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { CalendarDays, MapPin } from 'lucide-react';
 import type { Event } from '../types';
+import { isLive as statusIsLive } from '../types';
 import { formatDateRange } from '../utils/format';
 import { LiveBadge } from './LiveBadge';
 
 export function EventCard({ event }: { event: Event }) {
-  const hasLive = event.sessions?.some((s) => s.isLive);
+  const hasLive = event.sessions?.some((s) => statusIsLive(s.status));
 
   return (
     <Link

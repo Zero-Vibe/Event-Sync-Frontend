@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock, MapPin, Bookmark } from 'lucide-react';
 import type { Session, SessionSummary } from '../types';
+import { SessionStatus, isLive as statusIsLive } from '../types';
 import { formatTime } from '../utils/format';
 import { LiveBadge } from './LiveBadge';
+import { useFavoritesStore } from '../stores/favorite.store';
 
 type AnySession = Session | SessionSummary;
 
@@ -19,29 +21,56 @@ export function SessionCard({
   eventId: string;
   compact?: boolean;
 }) {
-  const id = session.id ?? '';
-  const title = session.title ?? 'Untitled session';
-  const isLive = session.isLive;
-  const room = session.room;
+  const id       = session.id ?? '';
+  const title    = session.title ?? 'Untitled session';
+  const live     = statusIsLive(session.status);
+  const ended    = session.status === SessionStatus.ENDED;
+  const room     = session.room;
   const speakers = session.speakers ?? [];
 
-  const startTime = isFullSession(session) ? session.startTime : session.startTime;
-  const endTime = isFullSession(session) ? session.endTime : session.endTime;
+  const startTime   = isFullSession(session) ? session.startTime : session.startTime;
+  const endTime     = isFullSession(session) ? session.endTime   : session.endTime;
   const description = isFullSession(session) ? session.description : undefined;
+
+  const { toggle, isFavorite } = useFavoritesStore();
+  const saved = isFavorite(id);
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggle(id);
+  };
 
   return (
     <Link
       href={`/events/${eventId}/sessions/${id}`}
-      data-live={isLive}
-      className="group flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-sm data-[live=true]:border-[color-mix(in_oklab,var(--live)_35%,transparent)]"
+      data-live={live}
+      data-ended={ended}
+      className="group relative flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-sm data-[live=true]:border-[color-mix(in_oklab,var(--live)_35%,transparent)]"
     >
-      <div className="flex items-center gap-2">
-        {isLive && <LiveBadge />}
+      {/* Bookmark button */}
+      <button
+        onClick={handleBookmark}
+        aria-label={saved ? 'Remove from agenda' : 'Save to agenda'}
+        data-saved={saved}
+        className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground data-[saved=true]:text-foreground"
+      >
+        <Bookmark
+          className="h-4 w-4 transition-all"
+          fill={saved ? 'currentColor' : 'none'}
+        />
+      </button>
+
+      <div className="flex items-center gap-2 pr-8">
+        {live && <LiveBadge />}
+        {ended && (
+          <span className="inline-flex items-center rounded-full border border-border/60 px-2 py-0.5 text-xs text-muted-foreground">
+            Ended
+          </span>
+        )}
       </div>
 
-      <h3 className="font-medium leading-snug tracking-tight text-sm">
-        {title}
-      </h3>
+      <h3 className="pr-8 font-medium leading-snug tracking-tight text-sm">{title}</h3>
 
       {!compact && description && (
         <p className="line-clamp-2 text-xs text-muted-foreground">{description}</p>
@@ -77,7 +106,7 @@ export function SessionCard({
                 key={s.id}
                 className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-muted text-[9px] font-medium"
               >
-                {(s.firstName + " " + s.lastName)}
+                {(s.firstName?.[0] ?? '') + (s.lastName?.[0] ?? '')}
               </div>
             )
           )}

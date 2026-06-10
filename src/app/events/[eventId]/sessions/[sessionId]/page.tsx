@@ -10,6 +10,7 @@ import { getSession } from '@/src/api/sessions';
 import { getEvent } from '@/src/api/events';
 import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions';
 import { formatTime } from '@/src/utils/format';
+import { SessionStatus, isLive as statusIsLive } from '@/src/types';
 import type { Question } from '@/src/types';
 
 export default function SessionDetailPage({
@@ -25,18 +26,21 @@ export default function SessionDetailPage({
     [eventId, sessionId]
   );
 
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
-  const [text, setText] = useState('');
-  const [author, setAuthor] = useState('');
+  const live = statusIsLive(session?.status);
+
+  const [questions, setQuestions]   = useState<Question[]>([]);
+  const [votedIds, setVotedIds]     = useState<Set<string>>(new Set());
+  const [text, setText]             = useState('');
+  const [author, setAuthor]         = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Fetch questions only when session is live
   const { data: fetchedQuestions } = useApi(
     () =>
-      session?.isLive
+      live
         ? getQuestions(eventId, sessionId)
         : Promise.resolve([] as Question[]),
-    [eventId, sessionId, session?.isLive]
+    [eventId, sessionId, live]
   );
 
   useEffect(() => {
@@ -61,38 +65,44 @@ export default function SessionDetailPage({
       setVotedIds((prev) => new Set(prev).add(q.id));
       setText('');
     } catch {
-      // fall through
+      // silent — user can retry
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleVote = async (qId: string) => {
-    const isVoted = votedIds.has(qId);
+    const alreadyVoted = votedIds.has(qId);
+    const upvote = !alreadyVoted; // true = upvote, false = remove vote
+
+    // Optimistic update
     setVotedIds((prev) => {
       const next = new Set(prev);
-      if (isVoted) next.delete(qId);
+      if (alreadyVoted) next.delete(qId);
       else next.add(qId);
       return next;
     });
     setQuestions((prev) =>
       prev.map((q) =>
-        q.id === qId ? { ...q, upvotes: q.upvotes + (isVoted ? -1 : 1) } : q
+        q.id === qId ? { ...q, upvotes: q.upvotes + (alreadyVoted ? -1 : 1) } : q
       )
     );
+
     try {
-      await voteQuestion(eventId, sessionId, qId, !isVoted);
+      const updated = await voteQuestion(eventId, sessionId, qId, upvote);
+      // Sync server count back
+      setQuestions((prev) => prev.map((q) => (q.id === qId ? updated : q)));
     } catch {
-      // revert optimistic update
+      // Revert optimistic update on error
       setVotedIds((prev) => {
         const next = new Set(prev);
-        if (isVoted) next.add(qId);
+        if (alreadyVoted) next.add(qId);
         else next.delete(qId);
         return next;
       });
       setQuestions((prev) =>
         prev.map((q) =>
-          q.id === qId ? { ...q, upvotes: q.upvotes + (isVoted ? 1 : -1) } : q
+          q.id === qId ? { ...q, upvotes: q.upvotes + (alreadyVoted ? 1 : -1) } : q
         )
       );
     }
@@ -107,8 +117,14 @@ export default function SessionDetailPage({
     );
   if (!session) return null;
 
+  const statusLabel =
+    session.status === SessionStatus.LIVE    ? 'Live now'   :
+    session.status === SessionStatus.ENDED   ? 'Ended'      :
+    session.status === SessionStatus.PUBLISHED ? 'Upcoming' : '–';
+
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
           <Link
@@ -120,7 +136,12 @@ export default function SessionDetailPage({
           </Link>
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            {session.isLive && <LiveBadge />}
+            {live && <LiveBadge />}
+            {session.status === SessionStatus.ENDED && (
+              <span className="inline-flex items-center rounded-full border border-border/60 px-2.5 py-0.5 text-xs text-muted-foreground">
+                Ended
+              </span>
+            )}
           </div>
 
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -145,8 +166,11 @@ export default function SessionDetailPage({
         </div>
       </section>
 
+      {/* Body */}
       <section className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_340px] lg:px-8">
         <div className="space-y-10">
+
+          {/* Speakers */}
           {session.speakers.length > 0 && (
             <div>
               <h2 className="text-base font-semibold">
@@ -167,18 +191,19 @@ export default function SessionDetailPage({
                       />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                        {sp.firstName + " " + sp.lastName}
+                        {(sp.firstName?.[0] ?? '') + (sp.lastName?.[0] ?? '')}
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm font-medium">{sp.firstName + " " + sp.lastName}</p>
-                    </div>
+                    <p className="text-sm font-medium">
+                      {[sp.firstName, sp.lastName].filter(Boolean).join(' ')}
+                    </p>
                   </Link>
                 ))}
               </div>
             </div>
           )}
 
+          {/* Description */}
           {session.description && (
             <div>
               <h2 className="text-base font-semibold">About</h2>
@@ -188,16 +213,21 @@ export default function SessionDetailPage({
             </div>
           )}
 
-          {session.isLive && (
+          {/* Live Q&A — only shown when session is LIVE */}
+          {live && (
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold">Live Q&amp;A</h2>
                 <span className="text-xs text-muted-foreground">
-                  {questions.length} questions
+                  {questions.length} question{questions.length !== 1 ? 's' : ''}
                 </span>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-4 rounded-xl border border-border bg-card p-4">
+              {/* Question form */}
+              <form
+                onSubmit={handleSubmit}
+                className="mt-4 rounded-xl border border-border bg-card p-4"
+              >
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
@@ -218,14 +248,15 @@ export default function SessionDetailPage({
                     className="inline-flex h-8 items-center gap-1.5 rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40 hover:opacity-80"
                   >
                     <Send className="h-3.5 w-3.5" />
-                    Post
+                    {submitting ? 'Posting…' : 'Post'}
                   </button>
                 </div>
               </form>
 
+              {/* Questions list */}
               <ul className="mt-4 space-y-2.5">
                 {sortedQuestions.map((q) => {
-                  const isVoted = votedIds.has(q.id);
+                  const voted = votedIds.has(q.id);
                   return (
                     <li
                       key={q.id}
@@ -233,12 +264,12 @@ export default function SessionDetailPage({
                     >
                       <button
                         onClick={() => handleVote(q.id)}
-                        data-active={isVoted}
+                        data-active={voted}
                         className="flex h-12 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-border/70 text-xs font-medium transition-colors hover:border-border data-[active=true]:border-foreground data-[active=true]:bg-foreground/5 data-[active=true]:text-foreground"
                         aria-label="Upvote"
                       >
                         <ArrowBigUp
-                          data-active={isVoted}
+                          data-active={voted}
                           className="h-4 w-4 data-[active=true]:fill-current"
                         />
                         {q.upvotes}
@@ -254,7 +285,7 @@ export default function SessionDetailPage({
                 })}
                 {sortedQuestions.length === 0 && (
                   <li className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                    No questions yet.
+                    No questions yet. Be the first to ask.
                   </li>
                 )}
               </ul>
@@ -262,6 +293,7 @@ export default function SessionDetailPage({
           )}
         </div>
 
+        {/* Sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-xl border border-border/70 bg-card p-5">
             <h3 className="text-sm font-semibold">Details</h3>
@@ -280,7 +312,7 @@ export default function SessionDetailPage({
               )}
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Status</dt>
-                <dd>{session.isLive ? 'Live now' : 'Not live'}</dd>
+                <dd>{statusLabel}</dd>
               </div>
             </dl>
           </div>

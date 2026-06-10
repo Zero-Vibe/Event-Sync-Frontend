@@ -1,40 +1,66 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { CalendarHeart, Trash2 } from "lucide-react";
-import { SessionCard } from "@/src/components/SessionCard";
-import { formatDate } from "@/src/utils/format";
-import { useFavoritesStore } from "@/src/stores/favorite.store";
-import { Session } from "../../types/index";
-import { getSessions } from "@/src/api/sessions"; 
-import { PageLoader, ErrorMessage } from "@/src/components/ui";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { CalendarHeart, Trash2 } from 'lucide-react';
+import { SessionCard } from '@/src/components/SessionCard';
+import { formatDate } from '@/src/utils/format';
+import { useFavoritesStore } from '@/src/stores/favorite.store';
+import { getEvents } from '@/src/api/events';
+import { getSessions } from '@/src/api/sessions';
+import { PageLoader, ErrorMessage } from '@/src/components/ui';
+import type { Session } from '@/src/types';
 
-interface AgendaPageProps {
-  eventId: string;
-}
-
-export default function AgendaPage({ eventId }: AgendaPageProps) {
+/**
+ * Agenda page — shows all sessions the user has bookmarked, grouped by day.
+ *
+ * Strategy: fetch all events, then all sessions for each event in parallel,
+ * then filter to those whose IDs are in the favorites store.
+ * This avoids needing a dedicated "get session by id" endpoint for each favorite.
+ */
+export default function AgendaPage() {
   const { sessionIds, toggle } = useFavoritesStore();
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const [sessions, setSessions] = useState<(Session & { eventId: string })[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchSessions() {
+    let cancelled = false;
+
+    async function load() {
       try {
-        setIsLoading(true);
-        const data = await getSessions(eventId);
-        setSessions(data);
+        setLoading(true);
+        setError(null);
+
+        const events = await getEvents();
+
+        // Fetch sessions for all events in parallel
+        const chunks = await Promise.allSettled(
+          events.map((ev) =>
+            getSessions(ev.id).then((ss) =>
+              ss.map((s) => ({ ...s, eventId: ev.id }))
+            )
+          )
+        );
+
+        const all: (Session & { eventId: string })[] = [];
+        for (const chunk of chunks) {
+          if (chunk.status === 'fulfilled') all.push(...chunk.value);
+        }
+
+        if (!cancelled) setSessions(all);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : 'Failed to load sessions.');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    fetchSessions();
-  }, [eventId]);
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const saved = sessions
     .filter((s) => sessionIds.includes(s.id))
@@ -44,51 +70,67 @@ export default function AgendaPage({ eventId }: AgendaPageProps) {
   for (const s of saved) {
     const k = formatDate(s.startTime);
     if (!byDay.has(k)) byDay.set(k, []);
-    const list = byDay.get(k);
-    if (list) list.push(s);
+    byDay.get(k)!.push(s);
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <section className="relative border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-          <p className="text-sm font-medium text-primary">Personal</p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">My agenda</h1>
-          <p className="mt-3 max-w-xl text-muted-foreground">Your saved sessions, sorted by start time.</p>
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+          <p className="text-sm font-medium text-muted-foreground">Personal</p>
+          <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+            My agenda
+          </h1>
+          <p className="mt-3 max-w-xl text-muted-foreground text-sm">
+            Your saved sessions, sorted by start time.
+          </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        {isLoading && <PageLoader />}
+        {loading && <PageLoader />}
 
-        {!isLoading && error && (
+        {!loading && error && (
           <div className="mx-auto max-w-md">
             <ErrorMessage message={error} />
           </div>
         )}
 
-        {!isLoading && !error && saved.length === 0 && (
+        {!loading && !error && sessionIds.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-16 text-center">
             <CalendarHeart className="mx-auto h-10 w-10 text-muted-foreground" />
             <h2 className="mt-4 text-lg font-semibold">No sessions saved yet</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Browse events and save sessions you want to attend.</p>
-            <Link href="/events" className="mt-6 inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:brightness-110">
+            <p className="mt-2 text-sm text-muted-foreground">
+              Browse events and tap the bookmark on any session to add it here.
+            </p>
+            <Link
+              href="/events"
+              className="mt-6 inline-flex h-10 items-center rounded-md bg-foreground px-5 text-sm font-semibold text-background hover:opacity-80"
+            >
               Browse events
             </Link>
           </div>
         )}
 
-        {!isLoading && !error && saved.length > 0 && (
+        {/* Favorites exist but sessions haven't loaded yet (e.g. data still fetching) */}
+        {!loading && !error && sessionIds.length > 0 && saved.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            None of your saved sessions could be found.
+          </p>
+        )}
+
+        {!loading && !error && saved.length > 0 && (
           <div className="space-y-12">
             {Array.from(byDay.entries()).map(([day, list]) => (
               <div key={day}>
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{day}</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {day}
+                </h2>
                 <div className="mt-4 space-y-3">
                   {list.map((s) => (
                     <div key={s.id} className="flex items-start gap-3">
                       <div className="flex-1">
-                        <SessionCard session={s} />
+                        <SessionCard session={s} eventId={s.eventId} />
                       </div>
                       <button
                         onClick={() => toggle(s.id)}

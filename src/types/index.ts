@@ -1,3 +1,14 @@
+// ─── Session status ────────────────────────────────────────────────────────────
+export enum SessionStatus {
+  PUBLISHED = 'PUBLISHED',
+  LIVE      = 'LIVE',
+  ENDED     = 'ENDED',
+}
+
+export const isLive   = (s?: SessionStatus) => s === SessionStatus.LIVE;
+export const isEnded  = (s?: SessionStatus) => s === SessionStatus.ENDED;
+
+// ─── Room ──────────────────────────────────────────────────────────────────────
 export interface Room {
   id: string;
   name: string;
@@ -8,6 +19,7 @@ export interface RoomCreate {
   name: string;
 }
 
+// ─── Speaker ───────────────────────────────────────────────────────────────────
 export interface SpeakerSummary {
   id?: string;
   firstName?: string;
@@ -30,7 +42,7 @@ export interface Speaker {
   pictureUrl?: string;
   biography?: string;
   links: SpeakerLink[];
-  sessions?: Session[];
+  sessions?: SessionSummary[];
 }
 
 export interface SpeakerCreate {
@@ -40,12 +52,14 @@ export interface SpeakerCreate {
   links?: string[];
 }
 
+// ─── Session ───────────────────────────────────────────────────────────────────
 export interface SessionSummary {
   id?: string;
   title?: string;
   startTime?: string;
   endTime?: string;
-  isLive?: boolean;
+  /** Replaces isLive boolean */
+  status?: SessionStatus;
   room?: Room;
   speakers?: SpeakerSummary[];
 }
@@ -57,7 +71,8 @@ export interface Session {
   startTime: string;
   endTime: string;
   capacity?: number;
-  isLive?: boolean;
+  /** Replaces isLive boolean */
+  status?: SessionStatus;
   room: Room;
   speakers: SpeakerSummary[];
   eventId: string;
@@ -73,6 +88,7 @@ export interface SessionCreate {
   speakerIds: string[];
 }
 
+// ─── Event ─────────────────────────────────────────────────────────────────────
 export interface Event {
   id: string;
   title: string;
@@ -91,6 +107,7 @@ export interface EventCreate {
   location: string;
 }
 
+// ─── Question ──────────────────────────────────────────────────────────────────
 export interface Question {
   id: string;
   content: string;
@@ -105,6 +122,7 @@ export interface QuestionCreate {
   authorName?: string | null;
 }
 
+// ─── Auth ──────────────────────────────────────────────────────────────────────
 export interface LoginRequest {
   email: string;
   password: string;

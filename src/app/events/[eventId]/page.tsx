@@ -10,6 +10,7 @@ import { useApi } from '@/src/hooks/useApi';
 import { getEvent } from '@/src/api/events';
 import { getSessions } from '@/src/api/sessions';
 import { formatDateRange, formatDate } from '@/src/utils/format';
+import { isLive as statusIsLive } from '@/src/types';
 
 const tabs = ['Overview', 'Schedule', 'Speakers'] as const;
 type Tab = (typeof tabs)[number];
@@ -20,6 +21,7 @@ export default function EventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = use(params);
+
   const { data: event, loading: loadingEvent, error: errorEvent } = useApi(
     () => getEvent(eventId),
     [eventId]
@@ -31,11 +33,12 @@ export default function EventDetailPage({
   const [tab, setTab] = useState<Tab>('Overview');
 
   if (loadingEvent) return <PageLoader />;
-  if (errorEvent) return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-      <ErrorMessage message={errorEvent} />
-    </div>
-  );
+  if (errorEvent)
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <ErrorMessage message={errorEvent} />
+      </div>
+    );
   if (!event) return null;
 
   const allSpeakers = Array.from(
@@ -54,10 +57,11 @@ export default function EventDetailPage({
     groupedByDay.get(day)!.push(s);
   }
 
-  const liveSessions = (sessions ?? []).filter((s) => s.isLive);
+  const liveSessions = (sessions ?? []).filter((s) => statusIsLive(s.status));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
           <Link
@@ -89,6 +93,7 @@ export default function EventDetailPage({
         </div>
       </section>
 
+      {/* Tab bar */}
       <div className="sticky top-14 z-30 border-b border-border/60 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl gap-0 overflow-x-auto px-4 sm:px-6 lg:px-8">
           {tabs.map((t) => (
@@ -107,6 +112,7 @@ export default function EventDetailPage({
         </div>
       </div>
 
+      {/* Content */}
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         {tab === 'Overview' && (
           <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
@@ -199,10 +205,12 @@ export default function EventDetailPage({
                     />
                   ) : (
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                      {s.firstName + " " + s.lastName}
+                      {(s.firstName?.[0] ?? '') + (s.lastName?.[0] ?? '')}
                     </div>
                   )}
-                  <p className="text-sm font-medium">{s.firstName + " " + s.lastName}</p>
+                  <p className="text-sm font-medium">
+                    {[s.firstName, s.lastName].filter(Boolean).join(' ')}
+                  </p>
                 </Link>
               ))}
             </div>
