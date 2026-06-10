@@ -1,53 +1,75 @@
-"use client";
+'use client';
 
-import { use } from "react";
-import Link from "next/link";
-import { ArrowLeft, XIcon, GitBranch, Link2Icon, Globe } from "lucide-react";
-import { SessionCard } from "@/src/components/SessionCard";
-import { sessionsForSpeaker, getSpeaker } from "@/src/data/queries";
+import { use } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import { SessionCard } from '@/src/components/SessionCard';
+import { PageLoader, ErrorMessage } from '@/src/components/ui';
+import { useApi } from '@/src/hooks/useApi';
+import { getSpeaker } from '@/src/api/speakers';
 
-export default function SpeakerDetailPage({ params }: { params: Promise<{ speakerId: string }> }) {
+export default function SpeakerDetailPage({
+  params,
+}: {
+  params: Promise<{ speakerId: string }>;
+}) {
   const { speakerId } = use(params);
-  const speaker = getSpeaker(speakerId);
-  const sessions = sessionsForSpeaker(speakerId);
+  const { data: speaker, loading, error } = useApi(
+    () => getSpeaker(speakerId),
+    [speakerId]
+  );
 
-  if (!speaker) {
+  if (loading) return <PageLoader />;
+  if (error)
     return (
-      <div className="flex min-h-screen items-center justify-center text-center">
-        <div>
-          <h1 className="text-3xl font-semibold">Speaker not found</h1>
-          <Link href="/" className="mt-4 inline-block text-primary hover:underline">← Home</Link>
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <ErrorMessage message={error} />
       </div>
     );
-  }
+  if (!speaker) return null;
 
-  const social = [
-    speaker.twitter && { icon: XIcon, label: speaker.twitter, href: `https://twitter.com/${speaker.twitter}` },
-    speaker.github && { icon: GitBranch, label: speaker.github, href: `https://github.com/${speaker.github}` },
-    speaker.linkedin && { icon: Link2Icon, label: speaker.linkedin, href: `https://linkedin.com/in/${speaker.linkedin}` },
-    speaker.website && { icon: Globe, label: speaker.website, href: `https://${speaker.website}` },
-  ].filter(Boolean) as { icon: typeof XIcon; label: string; href: string }[];
+  const sessions = speaker.sessions ?? [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <section className="relative border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-60" aria-hidden />
-        <div className="relative mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-          <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Back
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+          <Link
+            href="/events"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Link>
-          <div className="mt-8 flex flex-col gap-8 sm:flex-row sm:items-center">
-            <img src={speaker.avatar} alt={speaker.name} className="h-32 w-32 rounded-2xl object-cover ring-2 ring-border sm:h-40 sm:w-40" />
+
+          <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
+            {speaker.pictureUrl ? (
+              <img
+                src={speaker.pictureUrl}
+                alt={speaker.firstName}
+                className="h-20 w-20 rounded-xl object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-muted text-2xl font-semibold">
+                {speaker.firstName + " " + speaker.lastName}
+              </div>
+            )}
             <div>
-              <p className="text-sm font-medium text-primary">Speaker</p>
-              <h1 className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">{speaker.name}</h1>
-              <p className="mt-2 text-lg text-muted-foreground">{speaker.title} · {speaker.company}</p>
-              {social.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {social.map((s) => (
-                    <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-card px-3 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
-                      <s.icon className="h-3.5 w-3.5" /> {s.label}
+              <p className="text-sm text-muted-foreground">Speaker</p>
+              <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+                {speaker.firstName + " " + speaker.lastName}
+              </h1>
+              {speaker.links && speaker.links.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {speaker.links.map((link) => (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {link.label || link.platform}
                     </a>
                   ))}
                 </div>
@@ -57,13 +79,30 @@ export default function SpeakerDetailPage({ params }: { params: Promise<{ speake
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        <h2 className="text-xl font-semibold tracking-tight">Bio</h2>
-        <p className="mt-3 leading-relaxed text-muted-foreground">{speaker.bio}</p>
-        <h2 className="mt-12 text-xl font-semibold tracking-tight">Sessions</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {sessions.map((s) => <SessionCard key={s.id} session={s} />)}
-        </div>
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 space-y-10">
+        {speaker.biography && (
+          <div>
+            <h2 className="text-base font-semibold">Bio</h2>
+            <p className="mt-3 leading-relaxed text-sm text-muted-foreground">
+              {speaker.biography}
+            </p>
+          </div>
+        )}
+
+        {sessions.length > 0 && (
+          <div>
+            <h2 className="text-base font-semibold">Sessions</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {sessions.map((s) => (
+                <SessionCard
+                  key={s.id}
+                  session={s}
+                  eventId={(s as { eventId?: string }).eventId ?? ''}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -41,10 +41,10 @@ components:
           example: "DevConf 2025"
         description:
           type: string
-        start_date:
+        startDateTime:
           type: string
           format: date-time
-        end_date:
+        endDateTime:
           type: string
           format: date-time
         location:
@@ -54,7 +54,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SessionSummary"
-      required: [ id, title, start_date, end_date, location ]
+      required: [ id, title, startDateTime, endDateTime, location ]
 
     EventCreate:
       type: object
@@ -63,15 +63,15 @@ components:
           type: string
         description:
           type: string
-        start_date:
+        startDateTime:
           type: string
           format: date-time
-        end_date:
+        endDateTime:
           type: string
           format: date-time
         location:
           type: string
-      required: [ title, start_date, end_date, location ]
+      required: [ title, startDateTime, endDateTime, location ]
 
     # ── SESSION ──────────────────────────────
     Session:
