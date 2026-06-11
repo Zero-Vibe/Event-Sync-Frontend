@@ -11,17 +11,27 @@ export default function EventsPage() {
   const { data: events, loading, error } = useApi(getEvents);
   const [q, setQ] = useState('');
 
-  const filtered = useMemo(() => {
-    if (!events) return [];
-    if (!q.trim()) return events;
-    const lq = q.toLowerCase();
-    return events.filter(
-      (e) =>
-        e.title.toLowerCase().includes(lq) ||
-        e.location.toLowerCase().includes(lq) ||
-        e.description?.toLowerCase().includes(lq)
-    );
+  const { upcoming, past } = useMemo(() => {
+    if (!events) return { upcoming: [], past: [] };
+    const now = new Date();
+    const lq = q.trim().toLowerCase();
+
+    const filtered = lq
+      ? events.filter(
+          (e) =>
+            e.title.toLowerCase().includes(lq) ||
+            e.location.toLowerCase().includes(lq) ||
+            e.description?.toLowerCase().includes(lq)
+        )
+      : events;
+
+    return {
+      upcoming: filtered.filter((e) => new Date(e.endDateTime) >= now),
+      past: filtered.filter((e) => new Date(e.endDateTime) < now),
+    };
   }, [events, q]);
+
+  const total = upcoming.length + past.length;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -45,18 +55,41 @@ export default function EventsPage() {
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         {loading && <PageLoader />}
         {error && <ErrorMessage message={error} />}
+
         {events && (
           <>
-            <p className="mb-6 text-xs text-muted-foreground">
-              {filtered.length} of {events.length} events
+            <p className="mb-8 text-xs text-muted-foreground">
+              {total} of {events.length} events
             </p>
-            {filtered.length === 0 ? (
+
+            {total === 0 && (
               <p className="text-sm text-muted-foreground">No events match your search.</p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filtered.map((e) => (
-                  <EventCard key={e.id} event={e} />
-                ))}
+            )}
+
+            {upcoming.length > 0 && (
+              <div>
+                <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                  Upcoming
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {upcoming.map((e) => (
+                    <EventCard key={e.id} event={e} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Past */}
+            {past.length > 0 && (
+              <div className={upcoming.length > 0 ? 'mt-14' : ''}>
+                <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                  Past
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-60">
+                  {past.map((e) => (
+                    <EventCard key={e.id} event={e} />
+                  ))}
+                </div>
               </div>
             )}
           </>
