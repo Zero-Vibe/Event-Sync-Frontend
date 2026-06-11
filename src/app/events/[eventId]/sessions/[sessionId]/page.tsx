@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { use, useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Lock } from 'lucide-react';
@@ -20,9 +22,13 @@ export default function SessionDetailPage({
 }) {
   const { eventId, sessionId } = use(params);
 
-  const { data: event } = useApi(() => getEvent(eventId), [eventId]);
+  const { data: event } = useApi(
+    () => (eventId ? getEvent(eventId) : Promise.resolve(null)),
+    [eventId]
+  );
+  
   const { data: session, loading, error } = useApi(
-    () => getSession(eventId, sessionId),
+    () => (eventId && sessionId ? getSession(eventId, sessionId) : Promise.resolve(null)),
     [eventId, sessionId]
   );
 
@@ -36,7 +42,7 @@ export default function SessionDetailPage({
 
   const { data: fetchedQuestions } = useApi(
     () =>
-      live
+      live && eventId && sessionId
         ? getQuestions(eventId, sessionId)
         : Promise.resolve([] as Question[]),
     [eventId, sessionId, live]
@@ -53,7 +59,7 @@ export default function SessionDetailPage({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || submitting || !live) return;
+    if (!text.trim() || submitting || !live || !eventId || !sessionId) return;
     setSubmitting(true);
     try {
       const q = await createQuestion(eventId, sessionId, {
@@ -71,7 +77,7 @@ export default function SessionDetailPage({
   };
 
   const handleVote = async (qId: string) => {
-    if (!live) return;
+    if (!live || !eventId || !sessionId) return;
 
     const alreadyVoted = votedIds.has(qId);
     const upvote = !alreadyVoted;
