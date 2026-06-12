@@ -1,16 +1,12 @@
 import Link from 'next/link';
 import { Clock, MapPin, Bookmark } from 'lucide-react';
 import type { Session, SessionSummary } from '../types';
-import { SessionStatus, isLive as statusIsLive } from '../types';
+import { isLive, isEnded } from '../types';
 import { formatTime } from '../utils/format';
 import { LiveBadge } from './LiveBadge';
 import { useFavoritesStore } from '../stores/favorite.store';
 
 type AnySession = Session | SessionSummary;
-
-function isFullSession(s: AnySession): s is Session {
-  return 'startTime' in s && typeof (s as Session).startTime === 'string';
-}
 
 export function SessionCard({
   session,
@@ -21,16 +17,15 @@ export function SessionCard({
   eventId: string;
   compact?: boolean;
 }) {
-  const id       = session.id ?? '';
-  const title    = session.title ?? 'Untitled session';
-  const live     = statusIsLive(session.status);
-  const ended    = session.status === SessionStatus.ENDED;
-  const room     = session.room;
-  const speakers = session.speakers ?? [];
-
-  const startTime   = isFullSession(session) ? session.startTime : session.startTime;
-  const endTime     = isFullSession(session) ? session.endTime   : session.endTime;
-  const description = isFullSession(session) ? session.description : undefined;
+  const id         = session.id ?? '';
+  const title      = session.title ?? 'Untitled session';
+  const startTime  = session.startTime;
+  const endTime    = session.endTime;
+  const live       = isLive(startTime, endTime);
+  const ended      = isEnded(endTime);
+  const room       = session.room;
+  const speakers   = session.speakers ?? [];
+  const description = 'description' in session ? (session as Session).description : undefined;
 
   const { toggle, isFavorite } = useFavoritesStore();
   const saved = isFavorite(id);
@@ -63,7 +58,7 @@ export function SessionCard({
 
       <div className="flex items-center gap-2 pr-8">
         {live && <LiveBadge />}
-        {ended && (
+        {!live && ended && (
           <span className="inline-flex items-center rounded-full border border-border/60 px-2 py-0.5 text-xs text-muted-foreground">
             Ended
           </span>

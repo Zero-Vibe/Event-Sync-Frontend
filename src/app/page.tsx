@@ -10,6 +10,14 @@ import { getEvents } from '../api/events';
 export default function HomePage() {
   const { data: events, loading, error } = useApi(getEvents);
 
+  const now = Date.now();
+  const upcoming = (events ?? [])
+    .filter((e) => new Date(e.endDateTime).getTime() >= now)
+    .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
+  const past = (events ?? [])
+    .filter((e) => new Date(e.endDateTime).getTime() < now)
+    .sort((a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime());
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="border-b border-border/60">
@@ -50,18 +58,38 @@ export default function HomePage() {
         <div className="mt-6">
           {loading && <PageLoader />}
           {error && <ErrorMessage message={error} />}
-          {events && events.length === 0 && (
-            <p className="text-sm text-muted-foreground">No events yet.</p>
+          {events && upcoming.length === 0 && (
+            <p className="text-sm text-muted-foreground">No upcoming events.</p>
           )}
-          {events && events.length > 0 && (
+          {upcoming.length > 0 && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {events.slice(0, 6).map((e) => (
+              {upcoming.slice(0, 6).map((e) => (
                 <EventCard key={e.id} event={e} />
               ))}
             </div>
           )}
         </div>
       </section>
+
+      {!loading && !error && past.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Past events</h2>
+            <Link
+              href="/events"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              View all
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-60">
+            {past.slice(0, 3).map((e) => (
+              <EventCard key={e.id} event={e} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

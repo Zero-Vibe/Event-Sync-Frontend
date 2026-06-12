@@ -10,7 +10,7 @@ import { useApi } from '@/src/hooks/useApi';
 import { getEvent } from '@/src/api/events';
 import { getSessions } from '@/src/api/sessions';
 import { formatDateRange, formatDate } from '@/src/utils/format';
-import { isLive as statusIsLive } from '@/src/types';
+import { isLive } from '@/src/types';
 
 const tabs = ['Overview', 'Schedule', 'Speakers'] as const;
 type Tab = (typeof tabs)[number];
@@ -57,7 +57,7 @@ export default function EventDetailPage({
     groupedByDay.get(day)!.push(s);
   }
 
-  const liveSessions = (sessions ?? []).filter((s) => statusIsLive(s.status));
+  const liveSessions = (sessions ?? []).filter((s) => isLive(s.startTime, s.endTime));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
