@@ -1,12 +1,22 @@
-// ─── Session status ────────────────────────────────────────────────────────────
-export enum SessionStatus {
-  PUBLISHED = 'PUBLISHED',
-  LIVE      = 'LIVE',
-  ENDED     = 'ENDED',
-}
+// ─── Session timing helpers ────────────────────────────────────────────────────
+/** True when current time is between startTime and endTime (inclusive). */
+export const isLive = (startTime?: string, endTime?: string): boolean => {
+  if (!startTime || !endTime) return false;
+  const now = Date.now();
+  return now >= new Date(startTime).getTime() && now <= new Date(endTime).getTime();
+};
 
-export const isLive   = (s?: SessionStatus) => s === SessionStatus.LIVE;
-export const isEnded  = (s?: SessionStatus) => s === SessionStatus.ENDED;
+/** True when current time is past endTime. */
+export const isEnded = (endTime?: string): boolean => {
+  if (!endTime) return false;
+  return Date.now() > new Date(endTime).getTime();
+};
+
+/** True when current time is before startTime. */
+export const isUpcoming = (startTime?: string): boolean => {
+  if (!startTime) return false;
+  return Date.now() < new Date(startTime).getTime();
+};
 
 // ─── Room ──────────────────────────────────────────────────────────────────────
 export interface Room {
@@ -58,8 +68,6 @@ export interface SessionSummary {
   title?: string;
   startTime?: string;
   endTime?: string;
-  /** Replaces isLive boolean */
-  status?: SessionStatus;
   room?: Room;
   speakers?: SpeakerSummary[];
 }
@@ -71,8 +79,6 @@ export interface Session {
   startTime: string;
   endTime: string;
   capacity?: number;
-  /** Replaces isLive boolean */
-  status?: SessionStatus;
   room: Room;
   speakers: SpeakerSummary[];
   eventId: string;

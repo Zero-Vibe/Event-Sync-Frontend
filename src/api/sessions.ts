@@ -3,11 +3,10 @@ import { customFetch } from './client';
 
 export const getSessions = (
   eventId: string,
-  params?: { roomId?: string; live?: boolean }
+  params?: { roomId?: string }
 ): Promise<Session[]> => {
   const qs = new URLSearchParams();
   if (params?.roomId) qs.set('roomId', params.roomId);
-  if (params?.live !== undefined) qs.set('live', String(params.live));
   const q = qs.toString();
   return customFetch<Session[]>(
     `/events/${eventId}/sessions${q ? `?${q}` : ''}`
