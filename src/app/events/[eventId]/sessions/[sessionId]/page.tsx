@@ -1,11 +1,12 @@
 'use client';
 
-import { use, useState, useMemo, useEffect } from 'react';
+import { use, useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Lock } from 'lucide-react';
 import { LiveBadge } from '@/src/components/LiveBadge';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
+import { useSessionWebSocket } from '@/src/hooks/useSessionWebSocket';
 import { getSession } from '@/src/api/sessions';
 import { getEvent } from '@/src/api/events';
 import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions';
@@ -26,8 +27,8 @@ export default function SessionDetailPage({
     [eventId, sessionId]
   );
 
-  const live    = isLive(session?.startTime, session?.endTime);
-  const ended   = isEnded(session?.endTime);
+  const live     = isLive(session?.startTime, session?.endTime);
+  const ended    = isEnded(session?.endTime);
   const upcoming = isUpcoming(session?.startTime);
 
   const [questions, setQuestions]   = useState<Question[]>([]);
@@ -48,6 +49,26 @@ export default function SessionDetailPage({
     if (fetchedQuestions) setQuestions(fetchedQuestions);
   }, [fetchedQuestions]);
 
+  const handleNewQuestion = useCallback((question: Question) => {
+    setQuestions((prev) => {
+      const alreadyPresent = prev.some((q) => q.id === question.id);
+      return alreadyPresent ? prev : [...prev, question];
+    });
+  }, []);
+
+  const handleVoteUpdate = useCallback((updated: Question) => {
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === updated.id ? updated : q))
+    );
+  }, []);
+
+  useSessionWebSocket({
+    sessionId,
+    enabled: live,
+    onNewQuestion: handleNewQuestion,
+    onVoteUpdate:  handleVoteUpdate,
+  });
+
   const sortedQuestions = useMemo(
     () => [...questions].sort((a, b) => b.upvotes - a.upvotes),
     [questions]
@@ -62,11 +83,13 @@ export default function SessionDetailPage({
         content: text.trim(),
         authorName: author.trim() || null,
       });
-      setQuestions((prev) => [...prev, q]);
+      setQuestions((prev) => {
+        const alreadyPresent = prev.some((existing) => existing.id === q.id);
+        return alreadyPresent ? prev : [...prev, q];
+      });
       setVotedIds((prev) => new Set(prev).add(q.id));
       setText('');
     } catch {
-      // silent — user can retry
     } finally {
       setSubmitting(false);
     }
@@ -78,7 +101,6 @@ export default function SessionDetailPage({
     const alreadyVoted = votedIds.has(qId);
     const upvote = !alreadyVoted;
 
-    // Optimistic update
     setVotedIds((prev) => {
       const next = new Set(prev);
       if (alreadyVoted) next.delete(qId);
@@ -95,7 +117,6 @@ export default function SessionDetailPage({
       const updated = await voteQuestion(eventId, sessionId, qId, upvote);
       setQuestions((prev) => prev.map((q) => (q.id === qId ? updated : q)));
     } catch {
-      // Revert
       setVotedIds((prev) => {
         const next = new Set(prev);
         if (alreadyVoted) next.add(qId);
