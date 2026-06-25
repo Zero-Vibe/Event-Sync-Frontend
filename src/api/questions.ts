@@ -7,24 +7,22 @@ export const getQuestions = (eventId: string, sessionId: string): Promise<Questi
 export const createQuestion = (
   eventId: string,
   sessionId: string,
-  data: QuestionCreate
+  data: QuestionCreate,
+  token?: string | null
 ): Promise<Question> =>
   customFetch<Question>(`/events/${eventId}/sessions/${sessionId}/questions`, {
     method: 'POST',
     body: JSON.stringify(data),
+    headers: token ? { Authorization: `Bearer ${token}` } : { Authorization: '' },
   });
 
-/**
- * Vote on a question.
- * Controller: POST /events/{eventId}/sessions/{sessionId}/questions/{questionId}/vote?upvote=boolean
- */
 export const voteQuestion = (
   eventId: string,
   sessionId: string,
   questionId: string,
   upvote: boolean
-): Promise<Question> =>
-  customFetch<Question>(
+): Promise<number> =>
+  customFetch<number>(
     `/events/${eventId}/sessions/${sessionId}/questions/${questionId}/vote?upvote=${upvote}`,
     { method: 'POST' }
   );

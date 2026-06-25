@@ -13,6 +13,7 @@ import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions'
 import { formatTime } from '@/src/utils/format';
 import { isLive, isEnded, isUpcoming } from '@/src/types';
 import type { Question } from '@/src/types';
+import { useAuthStore } from '@/src/stores/auth.store';
 
 export default function SessionDetailPage({
   params,
@@ -27,14 +28,14 @@ export default function SessionDetailPage({
     [eventId, sessionId]
   );
 
-  const live     = isLive(session?.startTime, session?.endTime);
-  const ended    = isEnded(session?.endTime);
+  const live = isLive(session?.startTime, session?.endTime);
+  const ended = isEnded(session?.endTime);
   const upcoming = isUpcoming(session?.startTime);
 
-  const [questions, setQuestions]   = useState<Question[]>([]);
-  const [votedIds, setVotedIds]     = useState<Set<string>>(new Set());
-  const [text, setText]             = useState('');
-  const [author, setAuthor]         = useState('');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [text, setText] = useState('');
+  const [author, setAuthor] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const { data: fetchedQuestions } = useApi(
@@ -66,7 +67,7 @@ export default function SessionDetailPage({
     sessionId,
     enabled: live,
     onNewQuestion: handleNewQuestion,
-    onVoteUpdate:  handleVoteUpdate,
+    onVoteUpdate: handleVoteUpdate,
   });
 
   const sortedQuestions = useMemo(
@@ -79,10 +80,12 @@ export default function SessionDetailPage({
     if (!text.trim() || submitting || !live) return;
     setSubmitting(true);
     try {
+      const trimmedAuthor = author.trim();
+      const token = trimmedAuthor ? localStorage.getItem('access_token') : null;
       const q = await createQuestion(eventId, sessionId, {
         content: text.trim(),
-        authorName: author.trim() || null,
-      });
+        authorName: trimmedAuthor || null,
+      }, token);
       setQuestions((prev) => {
         const alreadyPresent = prev.some((existing) => existing.id === q.id);
         return alreadyPresent ? prev : [...prev, q];
@@ -114,8 +117,10 @@ export default function SessionDetailPage({
     );
 
     try {
-      const updated = await voteQuestion(eventId, sessionId, qId, upvote);
-      setQuestions((prev) => prev.map((q) => (q.id === qId ? updated : q)));
+      const newUpvotes = await voteQuestion(eventId, sessionId, qId, upvote);
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === qId ? { ...q, upvotes: newUpvotes } : q))
+      );
     } catch {
       setVotedIds((prev) => {
         const next = new Set(prev);
@@ -261,12 +266,14 @@ export default function SessionDetailPage({
                       className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                     />
                     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
-                      <input
-                        value={author}
-                        onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Your name (optional)"
-                        className="h-8 flex-1 min-w-[140px] rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                      />
+                      {!useAuthStore.getState().isAuthenticated && (
+                        <input
+                          value={author}
+                          onChange={(e) => setAuthor(e.target.value)}
+                          placeholder="Your name (optional)"
+                          className="h-8 flex-1 min-w-[140px] rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      )}
                       <button
                         type="submit"
                         disabled={!text.trim() || submitting}
@@ -279,11 +286,11 @@ export default function SessionDetailPage({
                   </form>
 
                   <ul className="mt-4 space-y-2.5">
-                    {sortedQuestions.map((q) => {
+                    {sortedQuestions.map((q, i) => {
                       const voted = votedIds.has(q.id);
                       return (
                         <li
-                          key={q.id}
+                          key={q.id ?? i}
                           className="flex gap-3 rounded-xl border border-border/70 bg-card p-4"
                         >
                           <button
@@ -301,14 +308,14 @@ export default function SessionDetailPage({
                           <div className="min-w-0 flex-1">
                             <p className="text-sm leading-relaxed">{q.content}</p>
                             <p className="mt-1.5 text-xs text-muted-foreground">
-                              {q.authorName ?? 'Anonymous'}
+                              {q.user?.name ?? 'Anonymous'}
                             </p>
                           </div>
                         </li>
                       );
                     })}
                     {sortedQuestions.length === 0 && (
-                      <li className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      <li key="empty" className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                         No questions yet. Be the first to ask.
                       </li>
                     )}
