@@ -106,11 +106,7 @@ export interface Question {
 export interface QuestionCreate {
   /** @minLength 1 */
   content: string;
-  /**
-     * Optional — anonymous if omitted
-     * @nullable
-     */
-  author_name?: string | null;
+  isAnonymous: boolean;
 }
 
 export interface LoginRequest {
