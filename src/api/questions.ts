@@ -14,17 +14,13 @@ export const createQuestion = (
     body: JSON.stringify(data),
   });
 
-/**
- * Vote on a question.
- * Controller: POST /events/{eventId}/sessions/{sessionId}/questions/{questionId}/vote?upvote=boolean
- */
 export const voteQuestion = (
   eventId: string,
   sessionId: string,
   questionId: string,
   upvote: boolean
-): Promise<Question> =>
-  customFetch<Question>(
+): Promise<number> =>
+  customFetch<number>(
     `/events/${eventId}/sessions/${sessionId}/questions/${questionId}/vote?upvote=${upvote}`,
     { method: 'POST' }
   );

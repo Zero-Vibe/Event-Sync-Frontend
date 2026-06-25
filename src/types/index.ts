@@ -113,11 +113,10 @@ export interface EventCreate {
   location: string;
 }
 
-// ─── Question ──────────────────────────────────────────────────────────────────
 export interface Question {
   id: string;
   content: string;
-  authorName?: string | null;
+  user?: { id: string; name: string; email?: string } | null;
   upvotes: number;
   createdAt: string;
   sessionId: string;

@@ -27,14 +27,14 @@ export default function SessionDetailPage({
     [eventId, sessionId]
   );
 
-  const live     = isLive(session?.startTime, session?.endTime);
-  const ended    = isEnded(session?.endTime);
+  const live = isLive(session?.startTime, session?.endTime);
+  const ended = isEnded(session?.endTime);
   const upcoming = isUpcoming(session?.startTime);
 
-  const [questions, setQuestions]   = useState<Question[]>([]);
-  const [votedIds, setVotedIds]     = useState<Set<string>>(new Set());
-  const [text, setText]             = useState('');
-  const [author, setAuthor]         = useState('');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [text, setText] = useState('');
+  const [author, setAuthor] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const { data: fetchedQuestions } = useApi(
@@ -66,7 +66,7 @@ export default function SessionDetailPage({
     sessionId,
     enabled: live,
     onNewQuestion: handleNewQuestion,
-    onVoteUpdate:  handleVoteUpdate,
+    onVoteUpdate: handleVoteUpdate,
   });
 
   const sortedQuestions = useMemo(
@@ -114,8 +114,10 @@ export default function SessionDetailPage({
     );
 
     try {
-      const updated = await voteQuestion(eventId, sessionId, qId, upvote);
-      setQuestions((prev) => prev.map((q) => (q.id === qId ? updated : q)));
+      const newUpvotes = await voteQuestion(eventId, sessionId, qId, upvote);
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === qId ? { ...q, upvotes: newUpvotes } : q))
+      );
     } catch {
       setVotedIds((prev) => {
         const next = new Set(prev);
@@ -279,11 +281,11 @@ export default function SessionDetailPage({
                   </form>
 
                   <ul className="mt-4 space-y-2.5">
-                    {sortedQuestions.map((q) => {
+                    {sortedQuestions.map((q, i) => {
                       const voted = votedIds.has(q.id);
                       return (
                         <li
-                          key={q.id}
+                          key={q.id ?? i}
                           className="flex gap-3 rounded-xl border border-border/70 bg-card p-4"
                         >
                           <button
@@ -301,14 +303,14 @@ export default function SessionDetailPage({
                           <div className="min-w-0 flex-1">
                             <p className="text-sm leading-relaxed">{q.content}</p>
                             <p className="mt-1.5 text-xs text-muted-foreground">
-                              {q.authorName ?? 'Anonymous'}
+                              {q.user?.name ?? 'Anonymous'}
                             </p>
                           </div>
                         </li>
                       );
                     })}
                     {sortedQuestions.length === 0 && (
-                      <li className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      <li key="empty" className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                         No questions yet. Be the first to ask.
                       </li>
                     )}
