@@ -7,11 +7,13 @@ export const getQuestions = (eventId: string, sessionId: string): Promise<Questi
 export const createQuestion = (
   eventId: string,
   sessionId: string,
-  data: QuestionCreate
+  data: QuestionCreate,
+  token?: string | null
 ): Promise<Question> =>
   customFetch<Question>(`/events/${eventId}/sessions/${sessionId}/questions`, {
     method: 'POST',
     body: JSON.stringify(data),
+    headers: token ? { Authorization: `Bearer ${token}` } : { Authorization: '' },
   });
 
 export const voteQuestion = (

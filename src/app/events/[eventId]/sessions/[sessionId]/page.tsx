@@ -13,6 +13,7 @@ import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions'
 import { formatTime } from '@/src/utils/format';
 import { isLive, isEnded, isUpcoming } from '@/src/types';
 import type { Question } from '@/src/types';
+import { useAuthStore } from '@/src/stores/auth.store';
 
 export default function SessionDetailPage({
   params,
@@ -79,10 +80,12 @@ export default function SessionDetailPage({
     if (!text.trim() || submitting || !live) return;
     setSubmitting(true);
     try {
+      const trimmedAuthor = author.trim();
+      const token = trimmedAuthor ? localStorage.getItem('access_token') : null;
       const q = await createQuestion(eventId, sessionId, {
         content: text.trim(),
-        authorName: author.trim() || null,
-      });
+        authorName: trimmedAuthor || null,
+      }, token);
       setQuestions((prev) => {
         const alreadyPresent = prev.some((existing) => existing.id === q.id);
         return alreadyPresent ? prev : [...prev, q];
@@ -263,12 +266,14 @@ export default function SessionDetailPage({
                       className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                     />
                     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
-                      <input
-                        value={author}
-                        onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Your name (optional)"
-                        className="h-8 flex-1 min-w-[140px] rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                      />
+                      {!useAuthStore.getState().isAuthenticated && (
+                        <input
+                          value={author}
+                          onChange={(e) => setAuthor(e.target.value)}
+                          placeholder="Your name (optional)"
+                          className="h-8 flex-1 min-w-[140px] rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      )}
                       <button
                         type="submit"
                         disabled={!text.trim() || submitting}
