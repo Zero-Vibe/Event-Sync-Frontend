@@ -124,7 +124,7 @@ export interface Question {
 
 export interface QuestionCreate {
   content: string;
-  authorName?: string | null;
+  isAnonymous: boolean;
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────

@@ -28,14 +28,14 @@ export default function SessionDetailPage({
     [eventId, sessionId]
   );
 
-  const live     = isLive(session?.startTime, session?.endTime);
-  const ended    = isEnded(session?.endTime);
+  const live = isLive(session?.startTime, session?.endTime);
+  const ended = isEnded(session?.endTime);
   const upcoming = isUpcoming(session?.startTime);
 
-  const [questions, setQuestions]   = useState<Question[]>([]);
-  const [votedIds, setVotedIds]     = useState<Set<string>>(new Set());
-  const [text, setText]             = useState('');
-  const [anonymous, setAnonymous]   = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [text, setText] = useState('');
+  const [anonymous, setAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const { isAuthenticated, token } = useAuthStore();
@@ -69,7 +69,7 @@ export default function SessionDetailPage({
     sessionId,
     enabled: live,
     onNewQuestion: handleNewQuestion,
-    onVoteUpdate:  handleVoteUpdate,
+    onVoteUpdate: handleVoteUpdate,
   });
 
   const sortedQuestions = useMemo(
@@ -84,8 +84,9 @@ export default function SessionDetailPage({
     try {
       const q = await createQuestion(eventId, sessionId, {
         content: text.trim(),
-        authorName: anonymous ? null : 'identified',
-      }, anonymous ? null : token);
+        isAnonymous: anonymous,
+      },  token);
+
       setQuestions((prev) => {
         const alreadyPresent = prev.some((existing) => existing.id === q.id);
         return alreadyPresent ? prev : [...prev, q];
