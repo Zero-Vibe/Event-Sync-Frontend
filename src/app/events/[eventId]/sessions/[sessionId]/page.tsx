@@ -13,6 +13,7 @@ import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions'
 import { formatTime } from '@/src/utils/format';
 import { isLive, isEnded, isUpcoming } from '@/src/types';
 import type { Question } from '@/src/types';
+import { useAuthStore } from '@/src/stores/auth.store';
 
 export default function SessionDetailPage({
   params,
@@ -27,15 +28,17 @@ export default function SessionDetailPage({
     [eventId, sessionId]
   );
 
-  const live     = isLive(session?.startTime, session?.endTime);
-  const ended    = isEnded(session?.endTime);
+  const live = isLive(session?.startTime, session?.endTime);
+  const ended = isEnded(session?.endTime);
   const upcoming = isUpcoming(session?.startTime);
 
-  const [questions, setQuestions]   = useState<Question[]>([]);
-  const [votedIds, setVotedIds]     = useState<Set<string>>(new Set());
-  const [text, setText]             = useState('');
-  const [author, setAuthor]         = useState('');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+  const [text, setText] = useState('');
+  const [anonymous, setAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const { isAuthenticated, token } = useAuthStore();
 
   const { data: fetchedQuestions } = useApi(
     () =>
@@ -66,7 +69,7 @@ export default function SessionDetailPage({
     sessionId,
     enabled: live,
     onNewQuestion: handleNewQuestion,
-    onVoteUpdate:  handleVoteUpdate,
+    onVoteUpdate: handleVoteUpdate,
   });
 
   const sortedQuestions = useMemo(
@@ -76,13 +79,14 @@ export default function SessionDetailPage({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || submitting || !live) return;
+    if (!text.trim() || submitting || !live || !isAuthenticated) return;
     setSubmitting(true);
     try {
       const q = await createQuestion(eventId, sessionId, {
         content: text.trim(),
-        authorName: author.trim() || null,
-      });
+        isAnonymous: anonymous,
+      },  token);
+
       setQuestions((prev) => {
         const alreadyPresent = prev.some((existing) => existing.id === q.id);
         return alreadyPresent ? prev : [...prev, q];
@@ -96,7 +100,7 @@ export default function SessionDetailPage({
   };
 
   const handleVote = async (qId: string) => {
-    if (!live) return;
+    if (!live || !isAuthenticated) return;
 
     const alreadyVoted = votedIds.has(qId);
     const upvote = !alreadyVoted;
@@ -114,8 +118,10 @@ export default function SessionDetailPage({
     );
 
     try {
-      const updated = await voteQuestion(eventId, sessionId, qId, upvote);
-      setQuestions((prev) => prev.map((q) => (q.id === qId ? updated : q)));
+      const newUpvotes = await voteQuestion(eventId, sessionId, qId, upvote);
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === qId ? { ...q, upvotes: newUpvotes } : q))
+      );
     } catch {
       setVotedIds((prev) => {
         const next = new Set(prev);
@@ -238,6 +244,9 @@ export default function SessionDetailPage({
                     {questions.length} question{questions.length !== 1 ? 's' : ''}
                   </span>
                 )}
+                {!isAuthenticated && live && (
+                  <span className="text-xs text-muted-foreground">— sign in to participate</span>
+                )}
               </div>
 
               {upcoming && (
@@ -249,47 +258,63 @@ export default function SessionDetailPage({
 
               {live && (
                 <>
-                  <form
-                    onSubmit={handleSubmit}
-                    className="mt-4 rounded-xl border border-border bg-card p-4"
-                  >
-                    <textarea
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
-                      placeholder="Ask a question..."
-                      rows={3}
-                      className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                    />
-                    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
-                      <input
-                        value={author}
-                        onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Your name (optional)"
-                        className="h-8 flex-1 min-w-[140px] rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!text.trim() || submitting}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40 hover:opacity-80"
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                        {submitting ? 'Posting…' : 'Post'}
-                      </button>
+                  {!isAuthenticated ? (
+                    <div className="mt-4 flex items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-5 py-4 text-sm text-muted-foreground">
+                      <Lock className="h-4 w-4 shrink-0" />
+                      <span>
+                        <Link href="/login" className="font-medium text-foreground hover:underline">
+                          Sign in
+                        </Link>{' '}
+                        to ask a question or vote.
+                      </span>
                     </div>
-                  </form>
+                  ) : (
+                    <form
+                      onSubmit={handleSubmit}
+                      className="mt-4 rounded-xl border border-border bg-card p-4"
+                    >
+                      <textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Ask a question..."
+                        rows={3}
+                        className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      />
+                      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={anonymous}
+                            onChange={(e) => setAnonymous(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-border"
+                          />
+                          Post anonymously
+                        </label>
+                        <button
+                          type="submit"
+                          disabled={!text.trim() || submitting}
+                          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40 hover:opacity-80"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                          {submitting ? 'Posting…' : 'Post'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
 
                   <ul className="mt-4 space-y-2.5">
-                    {sortedQuestions.map((q) => {
+                    {sortedQuestions.map((q, i) => {
                       const voted = votedIds.has(q.id);
                       return (
                         <li
-                          key={q.id}
+                          key={q.id ?? i}
                           className="flex gap-3 rounded-xl border border-border/70 bg-card p-4"
                         >
                           <button
                             onClick={() => handleVote(q.id)}
+                            disabled={!isAuthenticated}
                             data-active={voted}
-                            className="flex h-12 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-border/70 text-xs font-medium transition-colors hover:border-border data-[active=true]:border-foreground data-[active=true]:bg-foreground/5 data-[active=true]:text-foreground"
+                            className="flex h-12 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-border/70 text-xs font-medium transition-colors hover:border-border disabled:cursor-not-allowed disabled:opacity-40 data-[active=true]:border-foreground data-[active=true]:bg-foreground/5 data-[active=true]:text-foreground"
                             aria-label="Upvote"
                           >
                             <ArrowBigUp
@@ -301,14 +326,14 @@ export default function SessionDetailPage({
                           <div className="min-w-0 flex-1">
                             <p className="text-sm leading-relaxed">{q.content}</p>
                             <p className="mt-1.5 text-xs text-muted-foreground">
-                              {q.authorName ?? 'Anonymous'}
+                              {q.user?.name ?? 'Anonymous'}
                             </p>
                           </div>
                         </li>
                       );
                     })}
                     {sortedQuestions.length === 0 && (
-                      <li className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      <li key="empty" className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                         No questions yet. Be the first to ask.
                       </li>
                     )}
