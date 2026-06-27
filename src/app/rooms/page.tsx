@@ -12,7 +12,7 @@ import { Room } from "../../types"
 export default function RoomsPage() {
   const { data: rooms, loading, error } = useApi(getRooms);
 
-  const [roomDetails, setRoomDetails] = useState<Record<number, Room>>({});
+  const [roomDetails, setRoomDetails] = useState<Record<string, Room>>({});
 
   useEffect(() => {
     async function loadDetails() {
