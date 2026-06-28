@@ -1,33 +1,25 @@
-'use client';
+'use cache';
 
-import { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { SessionCard } from '@/src/components/SessionCard';
-import { PageLoader, ErrorMessage } from '@/src/components/ui';
-import { useApi } from '@/src/hooks/useApi';
-import { getRoom } from '@/src/api/rooms';
 import { formatDate } from '@/src/utils/format';
 import type { SessionSummary } from '@/src/types';
+import { cacheLife } from 'next/cache';
 
-export default function RoomDetailPage({
+export default async function RoomDetailPage({
   params,
 }: {
-  params: Promise<{ roomsId: string }>;
+  params: Promise<{ roomId: string }>;
 }) {
-  const { roomsId } = use(params);
-  const { data: room, loading, error } = useApi(
-    () => getRoom(roomsId),
-    [roomsId]
-  );
+  cacheLife({ stale: 60 * 60 * 12, revalidate: 60 * 60 * 3, expire: 60 * 60 * 24 })
+  
+  const { roomId } = await params;
+  const roomRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rooms/${roomId}`)
 
-  if (loading) return <PageLoader />;
-  if (error)
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <ErrorMessage message={error} />
-      </div>
-    );
+  if (!roomRes.ok) throw new Error("Failed to fetch room");
+  const room = await roomRes.json();
+  
   if (!room) return null;
 
   const sessions = room.sessions ?? [];
