@@ -6,9 +6,13 @@ import { EventCard } from '@/src/components/EventCard';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
 import { getEvents } from '@/src/api/events';
+import { isLive as checkLive } from '@/src/types';
+
+const locations = ['All locations'];
 
 const dateFilters = [
   { id: 'all', label: 'Any time' },
+  { id: 'live', label: 'Live now' },
   { id: 'upcoming', label: 'Upcoming' },
   { id: 'past', label: 'Past' },
 ];
@@ -16,36 +20,31 @@ const dateFilters = [
 export default function EventsPage() {
   const { data: events, loading, error } = useApi(getEvents);
   const [q, setQ] = useState('');
+  const [location, setLocation] = useState('All locations');
   const [date, setDate] = useState('all');
 
   const filtered = useMemo(() => {
-    if (!events) return { upcoming: [], past: [], total: 0, allCount: 0 };
-    const now = new Date();
+    if (!events) return [];
+    const now = Date.now();
     const lq = q.trim().toLowerCase();
 
-    const searched = lq
-      ? events.filter(
-          (e) =>
-            e.title.toLowerCase().includes(lq) ||
-            e.location.toLowerCase().includes(lq) ||
-            e.description?.toLowerCase().includes(lq)
-        )
-      : events;
+    return events.filter((e) => {
+      if (lq && !`${e.title} ${e.description ?? ''} ${e.location}`.toLowerCase().includes(lq)) return false;
+      if (location !== 'All locations' && e.location !== location) return false;
+      if (date === 'live') {
+        const hasLive = e.sessions?.some((s) => checkLive(s.startTime, s.endTime));
+        if (!hasLive) return false;
+      }
+      if (date === 'upcoming' && new Date(e.endDateTime).getTime() < now) return false;
+      if (date === 'past' && new Date(e.endDateTime).getTime() >= now) return false;
+      return true;
+    });
+  }, [events, q, location, date]);
 
-    const upcoming = searched.filter((e) => new Date(e.endDateTime) >= now);
-    const past = searched.filter((e) => new Date(e.endDateTime) < now);
-
-    let filtered = searched;
-    if (date === 'upcoming') filtered = upcoming;
-    if (date === 'past') filtered = past;
-
-    return {
-      upcoming,
-      past,
-      total: filtered.length,
-      allCount: searched.length,
-    };
-  }, [events, q, date]);
+  const uniqueLocations = useMemo(() => {
+    if (!events) return locations;
+    return ['All locations', ...Array.from(new Set(events.map((e) => e.location)))];
+  }, [events]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -54,19 +53,32 @@ export default function EventsPage() {
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <p className="text-sm font-medium text-primary">Browse</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">All events</h1>
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            Search across events worldwide.
-          </p>
+          {events && (
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              Search across {events.length} curated events worldwide.
+            </p>
+          )}
 
-          <div className="mt-10 grid gap-3 rounded-2xl border border-border/70 bg-card/70 p-3 backdrop-blur md:grid-cols-[1fr_auto]">
+          <div className="mt-10 grid gap-3 rounded-2xl border border-border/70 bg-card/70 p-3 backdrop-blur md:grid-cols-[1fr_auto_auto]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search events, cities, topics…"
+                placeholder="Search events, locations, topics…"
                 className="h-11 w-full rounded-lg bg-background/60 pl-9 pr-3 text-sm outline-none ring-1 ring-border/60 transition focus:ring-2 focus:ring-primary"
               />
+            </div>
+
+            <div className="relative">
+              <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <select
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="h-11 w-full appearance-none rounded-lg bg-background/60 pl-9 pr-8 text-sm outline-none ring-1 ring-border/60 focus:ring-2 focus:ring-primary md:w-56"
+              >
+                {uniqueLocations.map((l) => <option key={l}>{l}</option>)}
+              </select>
             </div>
 
             <div className="flex items-center gap-1 rounded-lg bg-background/60 p-1 ring-1 ring-border/60">
@@ -93,42 +105,16 @@ export default function EventsPage() {
         {events && (
           <>
             <p className="mb-6 text-sm text-muted-foreground">
-              Showing <span className="text-foreground">{filtered.total}</span> of {events.length} events
+              Showing <span className="text-foreground">{filtered.length}</span> of {events.length} events
             </p>
 
-            {filtered.total === 0 && (
+            {filtered.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/50 p-16 text-center">
                 <p className="text-muted-foreground">No events match your filters.</p>
               </div>
-            )}
-
-            {date !== 'past' && filtered.upcoming.length > 0 && (
-              <div className={date === 'all' ? '' : ''}>
-                {date === 'all' && (
-                  <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-                    Upcoming
-                  </h2>
-                )}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {filtered.upcoming.map((e) => (
-                    <EventCard key={e.id} event={e} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {date !== 'upcoming' && filtered.past.length > 0 && (
-              <div className={(date === 'all' && filtered.upcoming.length > 0) ? 'mt-14' : ''}>
-                {date === 'all' && (
-                  <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-                    Past
-                  </h2>
-                )}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 opacity-60">
-                  {filtered.past.map((e) => (
-                    <EventCard key={e.id} event={e} />
-                  ))}
-                </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filtered.map((e) => <EventCard key={e.id} event={e} />)}
               </div>
             )}
           </>

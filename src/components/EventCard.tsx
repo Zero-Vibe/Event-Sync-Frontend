@@ -13,8 +13,8 @@ export function EventCard({ event }: { event: Event }) {
       href={`/events/${event.id}`}
       className="card-hover group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
     >
-      <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary/20 via-primary/5 to-transparent">
-        <div className="absolute inset-0 bg-grid opacity-20" aria-hidden />
+      <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary/10 via-card to-card">
+        <div className="absolute inset-0 bg-grid opacity-30" aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
         {hasLive && (
           <div className="absolute left-4 top-4">
@@ -23,21 +23,16 @@ export function EventCard({ event }: { event: Event }) {
         )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <CalendarDays className="h-3.5 w-3.5" />
           {formatDateRange(event.startDateTime, event.endDateTime)}
         </div>
-        <h3 className="text-lg font-semibold leading-snug tracking-tight">
-          {event.title}
-        </h3>
+        <h3 className="text-lg font-semibold leading-snug tracking-tight">{event.title}</h3>
         {event.description && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">
-            {event.description}
-          </p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
         )}
-        <div className="mt-auto flex items-center gap-1.5 border-t border-border/60 pt-4 text-xs text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5" />
-          {event.location}
+        <div className="mt-auto flex items-center border-t border-border/60 pt-4 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{event.location}</span>
         </div>
       </div>
     </Link>
