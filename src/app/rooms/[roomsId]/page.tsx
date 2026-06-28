@@ -50,7 +50,7 @@ export default function RoomDetailPage({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-50" aria-hidden />
+        <div className="absolute inset-0 bg-radial-violet opacity-[0.125] dark:opacity-50" aria-hidden />
         <div className="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
           <Link
             href="/rooms"

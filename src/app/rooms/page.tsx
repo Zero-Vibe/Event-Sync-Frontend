@@ -32,7 +32,7 @@ export default function RoomsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-60" aria-hidden />
+        <div className="absolute inset-0 bg-radial-violet opacity-15 dark:opacity-60" aria-hidden />
         <div className="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
           <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> All events

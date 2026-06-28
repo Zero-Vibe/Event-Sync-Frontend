@@ -76,9 +76,9 @@ export default function EventDetailPage({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative">
-        <div className="relative h-[44vh] min-h-[320px] w-full overflow-hidden bg-linear-to-br from-primary/20 via-card to-card">
-          <div className="absolute inset-0 bg-grid opacity-30" aria-hidden />
-          <div className="absolute inset-0 bg-radial-violet opacity-60" aria-hidden />
+        <div className="relative h-[44vh] min-h-[320px] w-full overflow-hidden bg-linear-to-br from-primary/5 via-card to-card dark:from-primary/20 dark:via-card dark:to-card">
+          <div className="absolute inset-0 bg-grid opacity-[0.075] dark:opacity-30" aria-hidden />
+          <div className="absolute inset-0 bg-radial-violet opacity-15 dark:opacity-60" aria-hidden />
           <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent" />
         </div>
         <div className="relative z-10 mx-auto -mt-32 max-w-7xl px-4 sm:px-6 lg:px-8">
