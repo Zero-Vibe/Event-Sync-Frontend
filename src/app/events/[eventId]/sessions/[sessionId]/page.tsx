@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Lock } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Share2, Sparkles, Lock } from 'lucide-react';
 import { LiveBadge } from '@/src/components/LiveBadge';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
@@ -14,6 +14,7 @@ import { formatTime } from '@/src/utils/format';
 import { isLive, isEnded, isUpcoming } from '@/src/types';
 import type { Question } from '@/src/types';
 import { useAuthStore } from '@/src/stores/auth.store';
+import { useFavoritesStore } from '@/src/stores/favorite.store';
 
 export default function SessionDetailPage({
   params,
@@ -39,12 +40,10 @@ export default function SessionDetailPage({
   const [submitting, setSubmitting] = useState(false);
 
   const { isAuthenticated, token } = useAuthStore();
+  const { isFavorite, toggle } = useFavoritesStore();
 
   const { data: fetchedQuestions } = useApi(
-    () =>
-      live
-        ? getQuestions(eventId, sessionId)
-        : Promise.resolve([] as Question[]),
+    () => (live ? getQuestions(eventId, sessionId) : Promise.resolve([] as Question[])),
     [eventId, sessionId, live]
   );
 
@@ -60,9 +59,7 @@ export default function SessionDetailPage({
   }, []);
 
   const handleVoteUpdate = useCallback((updated: Question) => {
-    setQuestions((prev) =>
-      prev.map((q) => (q.id === updated.id ? updated : q))
-    );
+    setQuestions((prev) => prev.map((q) => (q.id === updated.id ? updated : q)));
   }, []);
 
   useSessionWebSocket({
@@ -85,7 +82,7 @@ export default function SessionDetailPage({
       const q = await createQuestion(eventId, sessionId, {
         content: text.trim(),
         isAnonymous: anonymous,
-      },  token);
+      }, token);
 
       setQuestions((prev) => {
         const alreadyPresent = prev.some((existing) => existing.id === q.id);
@@ -112,16 +109,12 @@ export default function SessionDetailPage({
       return next;
     });
     setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === qId ? { ...q, upvotes: q.upvotes + (alreadyVoted ? -1 : 1) } : q
-      )
+      prev.map((q) => (q.id === qId ? { ...q, upvotes: q.upvotes + (alreadyVoted ? -1 : 1) } : q))
     );
 
     try {
       const newUpvotes = await voteQuestion(eventId, sessionId, qId, upvote);
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === qId ? { ...q, upvotes: newUpvotes } : q))
-      );
+      setQuestions((prev) => prev.map((q) => (q.id === qId ? { ...q, upvotes: newUpvotes } : q)));
     } catch {
       setVotedIds((prev) => {
         const next = new Set(prev);
@@ -130,9 +123,7 @@ export default function SessionDetailPage({
         return next;
       });
       setQuestions((prev) =>
-        prev.map((q) =>
-          q.id === qId ? { ...q, upvotes: q.upvotes + (alreadyVoted ? 1 : -1) } : q
-        )
+        prev.map((q) => (q.id === qId ? { ...q, upvotes: q.upvotes + (alreadyVoted ? 1 : -1) } : q))
       );
     }
   };
@@ -147,11 +138,15 @@ export default function SessionDetailPage({
   if (!session) return null;
 
   const statusLabel = live ? 'Live now' : ended ? 'Ended' : upcoming ? 'Upcoming' : '–';
+  const isFav = isFavorite(session.id);
+  const speakers = session.speakers ?? [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <section className="border-b border-border/60">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden border-b border-border/60">
+        <div className="absolute inset-0 bg-radial-violet opacity-70" aria-hidden />
+        <div className="absolute inset-0 bg-grid opacity-20" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <Link
             href={`/events/${eventId}`}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -160,66 +155,79 @@ export default function SessionDetailPage({
             {event?.title ?? 'Back'}
           </Link>
 
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            {live && <LiveBadge />}
-            {!live && ended && (
-              <span className="inline-flex items-center rounded-full border border-border/60 px-2.5 py-0.5 text-xs text-muted-foreground">
-                Ended
-              </span>
-            )}
-          </div>
+          <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                {live && <LiveBadge />}
+                {!live && ended && (
+                  <span className="inline-flex items-center rounded-full border border-border/60 px-2.5 py-0.5 text-xs text-muted-foreground">
+                    Ended
+                  </span>
+                )}
+              </div>
 
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {session.title}
-          </h1>
+              <h1 className="mt-5 max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+                {session.title}
+              </h1>
 
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              {formatTime(session.startTime)} – {formatTime(session.endTime)}
-            </span>
-            {session.room && (
-              <Link
-                href={`/rooms/${session.room.id}`}
-                className="inline-flex items-center gap-2 hover:text-foreground"
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {formatTime(session.startTime)} – {formatTime(session.endTime)}
+                </span>
+                {session.room && (
+                  <Link href={`/rooms/${session.room.id}`} className="inline-flex items-center gap-2 hover:text-foreground">
+                    <MapPin className="h-4 w-4" />
+                    {session.room.name}
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => toggle(session.id)}
+                data-fav={isFav}
+                className="inline-flex h-10 items-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors border-border bg-card hover:bg-secondary data-[fav=true]:border-primary data-[fav=true]:bg-primary/15 data-[fav=true]:text-primary"
               >
-                <MapPin className="h-4 w-4" />
-                {session.room.name}
-              </Link>
-            )}
+                <Heart data-fav={isFav} className="h-4 w-4 data-[fav=true]:fill-current" />
+                {isFav ? 'Saved' : 'Save to agenda'}
+              </button>
+              <button className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium hover:bg-secondary">
+                <Share2 className="h-4 w-4" /> Share
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_340px] lg:px-8">
-        <div className="space-y-10">
-
-          {session.speakers.length > 0 && (
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
+        <div className="space-y-12">
+          {speakers.length > 0 && (
             <div>
-              <h2 className="text-base font-semibold">
-                {session.speakers.length > 1 ? 'Speakers' : 'Speaker'}
+              <h2 className="text-xl font-semibold tracking-tight">
+                {speakers.length > 1 ? 'Speakers' : 'Speaker'}
               </h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {session.speakers.map((sp) => (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {speakers.map((sp) => (
                   <Link
                     key={sp.id}
                     href={`/speakers/${sp.id}`}
-                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-accent/40"
+                    className="card-hover flex items-start gap-4 rounded-2xl border border-border bg-card p-5"
                   >
                     {sp["base64Picture"] ? (
-                      <img
-                        src={sp["base64Picture"]}
-                        alt={sp.firstName ?? ''}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
+                      <img src={sp["base64Picture"]} alt={sp.firstName ?? ''} className="h-16 w-16 rounded-full object-cover ring-2 ring-border" />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-sm font-medium ring-2 ring-border">
                         {(sp.firstName?.[0] ?? '') + (sp.lastName?.[0] ?? '')}
                       </div>
                     )}
-                    <p className="text-sm font-medium">
-                      {[sp.firstName, sp.lastName].filter(Boolean).join(' ')}
-                    </p>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold tracking-tight">
+                        {[sp.firstName, sp.lastName].filter(Boolean).join(' ')}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">Speaker</p>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -228,10 +236,8 @@ export default function SessionDetailPage({
 
           {session.description && (
             <div>
-              <h2 className="text-base font-semibold">About</h2>
-              <p className="mt-3 leading-relaxed text-sm text-muted-foreground">
-                {session.description}
-              </p>
+              <h2 className="text-xl font-semibold tracking-tight">About this session</h2>
+              <p className="mt-4 leading-relaxed text-muted-foreground">{session.description}</p>
             </div>
           )}
 
@@ -269,10 +275,7 @@ export default function SessionDetailPage({
                       </span>
                     </div>
                   ) : (
-                    <form
-                      onSubmit={handleSubmit}
-                      className="mt-4 rounded-xl border border-border bg-card p-4"
-                    >
+                    <form onSubmit={handleSubmit} className="mt-4 rounded-2xl border border-border bg-card p-4">
                       <textarea
                         value={text}
                         onChange={(e) => setText(e.target.value)}
@@ -293,7 +296,7 @@ export default function SessionDetailPage({
                         <button
                           type="submit"
                           disabled={!text.trim() || submitting}
-                          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40 hover:opacity-80"
+                          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-[0_4px_12px_-4px_color-mix(in_oklab,var(--primary)_50%,transparent)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Send className="h-3.5 w-3.5" />
                           {submitting ? 'Posting…' : 'Post'}
@@ -306,10 +309,7 @@ export default function SessionDetailPage({
                     {sortedQuestions.map((q, i) => {
                       const voted = votedIds.has(q.id);
                       return (
-                        <li
-                          key={q.id ?? i}
-                          className="flex gap-3 rounded-xl border border-border/70 bg-card p-4"
-                        >
+                        <li key={q.id ?? i} className="flex gap-3 rounded-xl border border-border/70 bg-card p-4">
                           <button
                             onClick={() => handleVote(q.id)}
                             disabled={!isAuthenticated}
@@ -317,10 +317,7 @@ export default function SessionDetailPage({
                             className="flex h-12 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-border/70 text-xs font-medium transition-colors hover:border-border disabled:cursor-not-allowed disabled:opacity-40 data-[active=true]:border-foreground data-[active=true]:bg-foreground/5 data-[active=true]:text-foreground"
                             aria-label="Upvote"
                           >
-                            <ArrowBigUp
-                              data-active={voted}
-                              className="h-4 w-4 data-[active=true]:fill-current"
-                            />
+                            <ArrowBigUp data-active={voted} className="h-4 w-4 data-[active=true]:fill-current" />
                             {q.upvotes}
                           </button>
                           <div className="min-w-0 flex-1">
@@ -333,7 +330,7 @@ export default function SessionDetailPage({
                       );
                     })}
                     {sortedQuestions.length === 0 && (
-                      <li key="empty" className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      <li className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                         No questions yet. Be the first to ask.
                       </li>
                     )}
@@ -345,9 +342,28 @@ export default function SessionDetailPage({
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-xl border border-border/70 bg-card p-5">
-            <h3 className="text-sm font-semibold">Details</h3>
-            <dl className="mt-3 space-y-2 text-sm">
+          {session.capacity && (
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h3 className="font-semibold">Capacity</h3>
+              <div className="mt-3 flex items-end justify-between">
+                <span className="text-3xl font-semibold tracking-tight">{Math.min(100, Math.round((session.speakers.length / session.capacity) * 100))}%</span>
+                <span className="text-xs text-muted-foreground">{session.capacity} max</span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
+                <div
+                  data-fill={session.capacity === 0 ? 'ok' : session.speakers.length >= session.capacity * 0.95 ? 'full' : session.speakers.length >= session.capacity * 0.8 ? 'warn' : 'ok'}
+                  className="h-full rounded-full transition-all data-[fill=full]:bg-destructive data-[fill=warn]:bg-amber-500 data-[fill=ok]:bg-primary"
+                  style={{ width: `${Math.min(100, Math.round((session.speakers.length / (session.capacity || 1)) * 100))}%` }}
+                />
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Plenty of seats available.
+              </p>
+            </div>
+          )}
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <h3 className="font-semibold">Details</h3>
+            <dl className="mt-4 space-y-3 text-sm">
               {session.room && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Room</dt>
