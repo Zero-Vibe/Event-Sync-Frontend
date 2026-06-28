@@ -96,8 +96,8 @@ export function SessionCard({
         <div className="flex items-center gap-2 pt-1">
           <div className="flex -space-x-2">
             {speakers.slice(0, 3).map((s) =>
-              s.pictureUrl ? (
-                <img key={s.id} src={s.pictureUrl} alt={s.firstName ?? ''} className="h-6 w-6 rounded-full border-2 border-card object-cover" />
+              s["base64Picture"] ? (
+                <img key={s.id} src={s["base64Picture"]} alt={s.firstName ?? ''} className="h-6 w-6 rounded-full border-2 border-card object-cover" />
               ) : (
                 <div key={s.id} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-muted text-[9px] font-medium">
                   {(s.firstName?.[0] ?? '') + (s.lastName?.[0] ?? '')}

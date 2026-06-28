@@ -215,8 +215,8 @@ export default function SessionDetailPage({
                     href={`/speakers/${sp.id}`}
                     className="card-hover flex items-start gap-4 rounded-2xl border border-border bg-card p-5"
                   >
-                    {sp.pictureUrl ? (
-                      <img src={sp.pictureUrl} alt={sp.firstName ?? ''} className="h-16 w-16 rounded-full object-cover ring-2 ring-border" />
+                    {sp["base64Picture"] ? (
+                      <img src={sp["base64Picture"]} alt={sp.firstName ?? ''} className="h-16 w-16 rounded-full object-cover ring-2 ring-border" />
                     ) : (
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-sm font-medium ring-2 ring-border">
                         {(sp.firstName?.[0] ?? '') + (sp.lastName?.[0] ?? '')}
