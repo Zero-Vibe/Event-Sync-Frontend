@@ -3,4 +3,5 @@ module.exports = {
   turbopack: {
     root: path.join(__dirname, '..'),
   },
+  cacheComponents: true
 }
