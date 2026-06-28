@@ -257,9 +257,9 @@ export default function SessionDetailPage({
                     href={`/speakers/${sp.id}`}
                     className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-accent/40"
                   >
-                    {sp.pictureUrl ? (
+                    {sp["base64Picture"] ? (
                       <img
-                        src={sp.pictureUrl}
+                        src={sp["base64Picture"]}
                         alt={sp.firstName ?? ''}
                         className="h-10 w-10 rounded-full object-cover"
                       />
