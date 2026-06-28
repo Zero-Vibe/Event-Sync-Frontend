@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Sparkles } from 'lucide-react';
+import { LogOut, Sparkles, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useAuthStore } from '../stores/auth.store';
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, logout } = useAuthStore();
+  const { theme, setTheme } = useTheme();
   const linkClass = 'text-sm font-medium text-muted-foreground transition-colors hover:text-foreground';
 
   const handleLogout = () => {
@@ -38,7 +40,17 @@ export function SiteHeader() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/80 bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="Toggle dark mode"
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          >
+            <Sun className="h-4 w-4 hidden dark:block" />
+            <Moon className="h-4 w-4 block dark:hidden" />
+          </button>
+
           {isAuthenticated ? (
             <>
               <Link
