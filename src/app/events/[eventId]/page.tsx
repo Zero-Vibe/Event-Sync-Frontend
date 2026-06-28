@@ -33,15 +33,6 @@ export default function EventDetailPage({
   );
   const [tab, setTab] = useState<Tab>('Overview');
 
-  if (loadingEvent) return <PageLoader />;
-  if (errorEvent)
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <ErrorMessage message={errorEvent} />
-      </div>
-    );
-  if (!event) return null;
-
   const allSpeakers = Array.from(
     new Map(
       (sessions ?? [])
@@ -73,6 +64,15 @@ export default function EventDetailPage({
   }, [sessions]);
 
   const liveSessions = (sessions ?? []).filter((s) => isLive(s.startTime, s.endTime));
+
+  if (loadingEvent) return <PageLoader />;
+  if (errorEvent)
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <ErrorMessage message={errorEvent} />
+      </div>
+    );
+  if (!event) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
