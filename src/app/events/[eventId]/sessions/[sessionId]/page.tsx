@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Share2, Sparkles, Lock } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Lock } from 'lucide-react';
 import { LiveBadge } from '@/src/components/LiveBadge';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
@@ -193,9 +193,7 @@ export default function SessionDetailPage({
                 <Heart data-fav={isFav} className="h-4 w-4 data-[fav=true]:fill-current" />
                 {isFav ? 'Saved' : 'Save to agenda'}
               </button>
-              <button className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium hover:bg-secondary">
-                <Share2 className="h-4 w-4" /> Share
-              </button>
+
             </div>
           </div>
         </div>
@@ -342,25 +340,6 @@ export default function SessionDetailPage({
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          {session.capacity && (
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <h3 className="font-semibold">Capacity</h3>
-              <div className="mt-3 flex items-end justify-between">
-                <span className="text-3xl font-semibold tracking-tight">{Math.min(100, Math.round((session.speakers.length / session.capacity) * 100))}%</span>
-                <span className="text-xs text-muted-foreground">{session.capacity} max</span>
-              </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
-                <div
-                  data-fill={session.capacity === 0 ? 'ok' : session.speakers.length >= session.capacity * 0.95 ? 'full' : session.speakers.length >= session.capacity * 0.8 ? 'warn' : 'ok'}
-                  className="h-full rounded-full transition-all data-[fill=full]:bg-destructive data-[fill=warn]:bg-amber-500 data-[fill=ok]:bg-primary"
-                  style={{ width: `${Math.min(100, Math.round((session.speakers.length / (session.capacity || 1)) * 100))}%` }}
-                />
-              </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Plenty of seats available.
-              </p>
-            </div>
-          )}
           <div className="rounded-2xl border border-border bg-card p-6">
             <h3 className="font-semibold">Details</h3>
             <dl className="mt-4 space-y-3 text-sm">
