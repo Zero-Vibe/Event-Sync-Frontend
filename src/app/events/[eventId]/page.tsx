@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { ArrowLeft, CalendarDays, MapPin, Users } from 'lucide-react';
 import { SessionCard } from '@/src/components/SessionCard';
 import { LiveBadge } from '@/src/components/LiveBadge';
-import { SpeakerCard } from '@/src/components/SpeakerCard';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
 import { getEvent } from '@/src/api/events';
@@ -77,10 +76,10 @@ export default function EventDetailPage({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative">
-        <div className="relative h-[44vh] min-h-[320px] w-full overflow-hidden bg-gradient-to-br from-primary/20 via-card to-card">
+        <div className="relative h-[44vh] min-h-[320px] w-full overflow-hidden bg-linear-to-br from-primary/20 via-card to-card">
           <div className="absolute inset-0 bg-grid opacity-30" aria-hidden />
           <div className="absolute inset-0 bg-radial-violet opacity-60" aria-hidden />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent" />
         </div>
         <div className="relative z-10 mx-auto -mt-32 max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link href="/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">

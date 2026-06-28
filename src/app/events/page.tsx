@@ -23,9 +23,10 @@ export default function EventsPage() {
   const [location, setLocation] = useState('All locations');
   const [date, setDate] = useState('all');
 
+  const [now] = useState(() => Date.now());
+
   const filtered = useMemo(() => {
     if (!events) return [];
-    const now = Date.now();
     const lq = q.trim().toLowerCase();
 
     return events.filter((e) => {
@@ -39,7 +40,7 @@ export default function EventsPage() {
       if (date === 'past' && new Date(e.endDateTime).getTime() >= now) return false;
       return true;
     });
-  }, [events, q, location, date]);
+  }, [events, q, location, date, now]);
 
   const uniqueLocations = useMemo(() => {
     if (!events) return locations;

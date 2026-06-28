@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import { GitBranch, Link2, Sparkles, XIcon } from 'lucide-react';
 
 export function SiteFooter() {
+  const [year] = useState(() => new Date().getFullYear());
   return (
     <footer className="border-t border-border/60 bg-background">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-accent">
                 <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
               <span className="text-lg font-semibold tracking-tight">EventSync</span>
@@ -36,7 +38,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center">
-          <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} EventSync, Inc. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground">&copy; {year} EventSync, Inc. All rights reserved.</p>
           <div className="flex items-center gap-3 text-muted-foreground">
             <a href="#" aria-label="X" className="hover:text-foreground"><XIcon className="h-4 w-4" /></a>
             <a href="#" aria-label="GitHub" className="hover:text-foreground"><GitBranch className="h-4 w-4" /></a>
