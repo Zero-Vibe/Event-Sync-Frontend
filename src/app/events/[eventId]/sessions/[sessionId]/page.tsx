@@ -150,8 +150,10 @@ export default function SessionDetailPage({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <section className="border-b border-border/60">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden border-b border-border/60">
+        <div className="absolute inset-0 bg-radial-violet opacity-70" aria-hidden />
+        <div className="absolute inset-0 bg-grid opacity-20" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <Link
             href={`/events/${eventId}`}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -169,11 +171,11 @@ export default function SessionDetailPage({
             )}
           </div>
 
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="mt-5 max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             {session.title}
           </h1>
 
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               <Clock className="h-4 w-4" />
               {formatTime(session.startTime)} – {formatTime(session.endTime)}
@@ -191,45 +193,48 @@ export default function SessionDetailPage({
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_340px] lg:px-8">
-        <div className="space-y-10">
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
+        <div className="space-y-12">
 
           {session.speakers.length > 0 && (
             <div>
-              <h2 className="text-base font-semibold">
+              <h2 className="text-xl font-semibold tracking-tight">
                 {session.speakers.length > 1 ? 'Speakers' : 'Speaker'}
               </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {session.speakers.map((sp) => (
-                  <Link
-                    key={sp.id}
-                    href={`/speakers/${sp.id}`}
-                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-accent/40"
-                  >
-                    {sp.pictureUrl ? (
-                      <img
-                        src={sp.pictureUrl}
-                        alt={sp.firstName ?? ''}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                        {(sp.firstName?.[0] ?? '') + (sp.lastName?.[0] ?? '')}
+                  {session.speakers.map((sp) => (
+                    <Link
+                      key={sp.id}
+                      href={`/speakers/${sp.id}`}
+                      className="card-hover flex items-center gap-4 rounded-2xl border border-border bg-card p-5"
+                    >
+                      {sp.pictureUrl ? (
+                        <img
+                          src={sp.pictureUrl}
+                          alt={sp.firstName ?? ''}
+                          className="h-16 w-16 rounded-full object-cover ring-2 ring-border"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-sm font-medium ring-2 ring-border">
+                          {(sp.firstName?.[0] ?? '') + (sp.lastName?.[0] ?? '')}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h3 className="font-semibold tracking-tight">
+                          {[sp.firstName, sp.lastName].filter(Boolean).join(' ')}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">Speaker</p>
                       </div>
-                    )}
-                    <p className="text-sm font-medium">
-                      {[sp.firstName, sp.lastName].filter(Boolean).join(' ')}
-                    </p>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
               </div>
             </div>
           )}
 
           {session.description && (
             <div>
-              <h2 className="text-base font-semibold">About</h2>
-              <p className="mt-3 leading-relaxed text-sm text-muted-foreground">
+              <h2 className="text-xl font-semibold tracking-tight">About this session</h2>
+              <p className="mt-4 leading-relaxed text-muted-foreground">
                 {session.description}
               </p>
             </div>
@@ -345,9 +350,9 @@ export default function SessionDetailPage({
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-xl border border-border/70 bg-card p-5">
-            <h3 className="text-sm font-semibold">Details</h3>
-            <dl className="mt-3 space-y-2 text-sm">
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <h3 className="font-semibold">Details</h3>
+            <dl className="mt-4 space-y-3 text-sm">
               {session.room && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Room</dt>

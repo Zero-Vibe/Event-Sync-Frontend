@@ -49,8 +49,9 @@ export default function RoomDetailPage({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <section className="border-b border-border/60">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+      <section className="relative border-b border-border/60">
+        <div className="absolute inset-0 bg-radial-violet opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
           <Link
             href="/rooms"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -58,30 +59,26 @@ export default function RoomDetailPage({
             <ArrowLeft className="h-4 w-4" />
             All rooms
           </Link>
-          <h1 className="mt-6 text-3xl font-semibold tracking-tight">{room.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">{room.name}</h1>
+          <p className="mt-2 text-lg text-muted-foreground">
             {sessions.length} session{sessions.length !== 1 ? 's' : ''}
           </p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         {sessions.length === 0 && (
           <p className="text-sm text-muted-foreground">No sessions in this room.</p>
         )}
-        <div className="space-y-10">
+        <div className="space-y-12">
           {Array.from(byDay.entries()).map(([day, daySessions]) => (
             <div key={day}>
-              <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 {day}
               </h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {daySessions.map((s) => (
-                  <SessionCard
-                    key={s.id}
-                    session={s}
-                    eventId={eventId}
-                  />
+                  <SessionCard key={s.id} session={s} eventId={eventId} />
                 ))}
               </div>
             </div>
