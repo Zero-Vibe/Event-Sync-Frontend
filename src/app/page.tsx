@@ -54,9 +54,7 @@ export default function HomePage() {
                 See features
               </a>
             </div>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs uppercase tracking-widest text-muted-foreground/70">
-              <span>Stripe</span><span>Linear</span><span>Vercel</span><span>Anthropic</span><span>Cloudflare</span>
-            </div>
+            
           </div>
         </div>
       </section>
