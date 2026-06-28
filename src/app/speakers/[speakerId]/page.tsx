@@ -44,8 +44,8 @@ export default function SpeakerDetailPage({
             <ArrowLeft className="h-4 w-4" /> Back
           </Link>
           <div className="mt-8 flex flex-col gap-8 sm:flex-row sm:items-center">
-            {speaker.pictureUrl ? (
-              <img src={speaker.pictureUrl} alt={speaker.firstName} className="h-32 w-32 rounded-2xl object-cover ring-2 ring-border sm:h-40 sm:w-40" />
+            {speaker["base64Picture"] ? (
+              <img src={speaker["base64Picture"]} alt={speaker.firstName} className="h-32 w-32 rounded-2xl object-cover ring-2 ring-border sm:h-40 sm:w-40" />
             ) : (
               <div className="flex h-32 w-32 items-center justify-center rounded-2xl bg-muted text-2xl font-semibold ring-2 ring-border sm:h-40 sm:w-40">
                 {(speaker.firstName?.[0] ?? '') + (speaker.lastName?.[0] ?? '')}

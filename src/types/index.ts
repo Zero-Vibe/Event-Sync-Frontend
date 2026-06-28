@@ -34,7 +34,7 @@ export interface SpeakerSummary {
   id?: string;
   firstName?: string;
   lastName?: string;
-  pictureUrl?: string;
+  base64Picture?: string;
 }
 
 export interface SpeakerLink {
@@ -49,7 +49,7 @@ export interface Speaker {
   id: string;
   firstName: string;
   lastName: string;
-  pictureUrl?: string;
+  base64Picture?: string;
   biography?: string;
   links: SpeakerLink[];
   sessions?: SessionSummary[];
@@ -57,7 +57,7 @@ export interface Speaker {
 
 export interface SpeakerCreate {
   fullName: string;
-  pictureUrl?: string;
+  base64Picture?: string;
   biography?: string;
   links?: string[];
 }
