@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Lock } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Lock, RefreshCw } from 'lucide-react';
 import { LiveBadge } from '@/src/components/LiveBadge';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
@@ -14,6 +14,7 @@ import { formatTime } from '@/src/utils/format';
 import { isLive, isEnded, isUpcoming } from '@/src/types';
 import type { Question } from '@/src/types';
 import { useAuthStore } from '@/src/stores/auth.store';
+import { useRegistrationStore } from '@/src/stores/registration.store';
 
 export default function SessionDetailPage({
   params,
@@ -40,6 +41,10 @@ export default function SessionDetailPage({
 
   const { isAuthenticated, token } = useAuthStore();
 
+  const { toggle: toggleRegistrationStatus, isRegistered } = useRegistrationStore();
+  const [registrationCount, setRegistrationCount] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0)
+  
   const { data: fetchedQuestions } = useApi(
     () =>
       live
@@ -76,6 +81,35 @@ export default function SessionDetailPage({
     () => [...questions].sort((a, b) => b.upvotes - a.upvotes),
     [questions]
   );
+
+  const handleRegister = async (eventId: string, sessionId: string, token: string | null) => {
+    const response = await fetch(`/api/events/${eventId}/sessions/${sessionId}/register/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      }
+    })
+    if (response.ok) toggleRegistrationStatus(sessionId);
+  }
+
+  const handleUnregister = async (eventId: string, sessionId: string, token: string | null) => {
+    const response = await fetch(`/api/events/${eventId}/sessions/${sessionId}/register`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      }
+    })
+    if (response.ok) toggleRegistrationStatus(sessionId);
+  }
+
+  useEffect(() => {
+    fetch(`/api/events/${eventId}/sessions/${sessionId}/register`)
+      .then(r => r.json())
+      .then(r => setRegistrationCount(r.count))
+      .catch(() => setRegistrationCount(0))
+  }, [eventId, sessionId, refreshKey])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,9 +203,26 @@ export default function SessionDetailPage({
             )}
           </div>
 
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {session.title}
-          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              {session.title}
+            </h1>
+            {!live && (
+              <button
+                className={`inline-flex h-8 shrink-0 items-center rounded-md px-3 text-xs font-medium transition-colors ${isRegistered(sessionId)
+                  ? "border border-border text-muted-foreground hover:border-destructive hover:text-destructive"
+                  : "bg-foreground text-background hover:opacity-80"
+                  }`}
+                onClick={() =>
+                  isRegistered(sessionId)
+                    ? handleUnregister(eventId, sessionId, token)
+                    : handleRegister(eventId, sessionId, token)
+                }
+              >
+                {isRegistered(sessionId) ? "Unregister" : "Register"}
+              </button>
+            )}
+          </div>
 
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
@@ -355,9 +406,18 @@ export default function SessionDetailPage({
                 </div>
               )}
               {session.capacity && (
-                <div className="flex justify-between">
+                <div className="flex items-center justify-between">
                   <dt className="text-muted-foreground">Capacity</dt>
-                  <dd>{session.capacity}</dd>
+                  <dd className="flex items-center gap-1.5">
+                    {registrationCount ?? '-'} / {session.capacity}
+                    <button
+                      onClick={() => setRefreshKey(k => k + 1)}
+                      className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Refresh"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </button>
+                  </dd>
                 </div>
               )}
               <div className="flex justify-between">
