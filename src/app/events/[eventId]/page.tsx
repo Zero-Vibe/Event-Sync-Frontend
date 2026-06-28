@@ -146,9 +146,6 @@ export default function EventDetailPage({
                   <div className="flex justify-between"><dt className="text-muted-foreground">Rooms</dt><dd>{eventRooms.length}</dd></div>
                 </dl>
               </div>
-              <button className="w-full rounded-xl bg-primary py-3 font-semibold text-primary-foreground shadow-lg transition hover:brightness-110">
-                Get your ticket
-              </button>
             </aside>
           </div>
         )}
