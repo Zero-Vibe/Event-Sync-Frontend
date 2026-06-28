@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { GitBranch, Link2, Sparkles, XIcon } from 'lucide-react';
 
