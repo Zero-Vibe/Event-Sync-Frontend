@@ -13,9 +13,9 @@ export function EventCard({ event }: { event: Event }) {
       href={`/events/${event.id}`}
       className="card-hover group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
     >
-      <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-primary/10 via-card to-card">
+      <div className="relative aspect-[16/9] overflow-hidden bg-linear-to-br from-primary/10 via-card to-card">
         <div className="absolute inset-0 bg-grid opacity-30" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-card via-card/30 to-transparent" />
         {hasLive && (
           <div className="absolute left-4 top-4">
             <LiveBadge />

@@ -8,15 +8,7 @@ import { useFavoritesStore } from '../stores/favorite.store';
 
 type AnySession = Session | SessionSummary;
 
-const trackColors: Record<string, string> = {
-  Infrastructure: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
-  AI: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-  Design: 'bg-pink-500/15 text-pink-300 border-pink-500/30',
-  DevTools: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  Security: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-  Frontend: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  Workshop: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-};
+
 
 export function SessionCard({
   session,
