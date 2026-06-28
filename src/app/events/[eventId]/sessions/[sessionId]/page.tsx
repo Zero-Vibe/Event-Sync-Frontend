@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Share2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, ArrowBigUp, Send, Heart, Share2, Sparkles, Lock } from 'lucide-react';
 import { LiveBadge } from '@/src/components/LiveBadge';
 import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
@@ -13,6 +13,7 @@ import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions'
 import { formatTime } from '@/src/utils/format';
 import { isLive, isEnded, isUpcoming } from '@/src/types';
 import type { Question } from '@/src/types';
+import { useAuthStore } from '@/src/stores/auth.store';
 import { useFavoritesStore } from '@/src/stores/favorite.store';
 
 export default function SessionDetailPage({
@@ -35,9 +36,10 @@ export default function SessionDetailPage({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
   const [text, setText] = useState('');
-  const [name, setName] = useState('');
+  const [anonymous, setAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const { isAuthenticated, token } = useAuthStore();
   const { isFavorite, toggle } = useFavoritesStore();
 
   const { data: fetchedQuestions } = useApi(
@@ -74,10 +76,14 @@ export default function SessionDetailPage({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || submitting || !live) return;
+    if (!text.trim() || submitting || !live || !isAuthenticated) return;
     setSubmitting(true);
     try {
-      const q = await createQuestion(eventId, sessionId, { content: text.trim(), isAnonymous: !name.trim() }, undefined);
+      const q = await createQuestion(eventId, sessionId, {
+        content: text.trim(),
+        isAnonymous: anonymous,
+      }, token);
+
       setQuestions((prev) => {
         const alreadyPresent = prev.some((existing) => existing.id === q.id);
         return alreadyPresent ? prev : [...prev, q];
@@ -91,7 +97,7 @@ export default function SessionDetailPage({
   };
 
   const handleVote = async (qId: string) => {
-    if (!live) return;
+    if (!live || !isAuthenticated) return;
 
     const alreadyVoted = votedIds.has(qId);
     const upvote = !alreadyVoted;
@@ -237,82 +243,99 @@ export default function SessionDetailPage({
 
           {!ended && (
             <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold">Q&amp;A</h2>
+                {live && (
+                  <span className="text-xs text-muted-foreground">
+                    {questions.length} question{questions.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {!isAuthenticated && live && (
+                  <span className="text-xs text-muted-foreground">— sign in to participate</span>
+                )}
+              </div>
+
               {upcoming && (
-                <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-5 py-4 text-sm text-muted-foreground">
-                  <span>Q&A opens when the session goes live.</span>
+                <div className="mt-4 flex items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-5 py-4 text-sm text-muted-foreground">
+                  <Lock className="h-4 w-4 shrink-0" />
+                  Q&A opens when the session goes live.
                 </div>
               )}
 
               {live && (
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                        <Sparkles className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold tracking-tight">Live Q&amp;A</h2>
-                        <p className="text-xs text-muted-foreground">
-                          {questions.length} questions · sorted by upvotes
-                        </p>
-                      </div>
+                <>
+                  {!isAuthenticated ? (
+                    <div className="mt-4 flex items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-5 py-4 text-sm text-muted-foreground">
+                      <Lock className="h-4 w-4 shrink-0" />
+                      <span>
+                        <Link href="/login" className="font-medium text-foreground hover:underline">
+                          Sign in
+                        </Link>{' '}
+                        to ask a question or vote.
+                      </span>
                     </div>
-                    <LiveBadge label="Open" />
-                  </div>
-
-                  <form onSubmit={handleSubmit} className="mt-5 rounded-2xl border border-border bg-card p-4">
-                    <textarea
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
-                      placeholder="Ask the speaker a question…"
-                      rows={3}
-                      className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                    />
-                    <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border/60 pt-3">
-                      <input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name (optional)"
-                        className="h-9 flex-1 min-w-[160px] rounded-md bg-secondary/50 px-3 text-sm outline-none ring-1 ring-border focus:ring-2 focus:ring-primary"
+                  ) : (
+                    <form onSubmit={handleSubmit} className="mt-4 rounded-2xl border border-border bg-card p-4">
+                      <textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Ask a question..."
+                        rows={3}
+                        className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                       />
-                      <button
-                        type="submit"
-                        disabled={!text.trim() || submitting}
-                        className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-50 hover:brightness-110"
-                      >
-                        <Send className="h-4 w-4" /> Post
-                      </button>
-                    </div>
-                  </form>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={anonymous}
+                            onChange={(e) => setAnonymous(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-border"
+                          />
+                          Post anonymously
+                        </label>
+                        <button
+                          type="submit"
+                          disabled={!text.trim() || submitting}
+                          className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-[0_4px_12px_-4px_color-mix(in_oklab,var(--primary)_50%,transparent)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                          {submitting ? 'Posting…' : 'Post'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
 
-                  <ul className="mt-6 space-y-3">
+                  <ul className="mt-4 space-y-2.5">
                     {sortedQuestions.map((q, i) => {
                       const voted = votedIds.has(q.id);
                       return (
-                        <li key={q.id ?? i} className="group flex gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+                        <li key={q.id ?? i} className="flex gap-3 rounded-xl border border-border/70 bg-card p-4">
                           <button
                             onClick={() => handleVote(q.id)}
+                            disabled={!isAuthenticated}
                             data-active={voted}
-                            className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-lg border text-xs font-semibold transition-colors border-border bg-secondary/40 text-muted-foreground hover:border-primary/40 hover:text-foreground data-[active=true]:border-primary data-[active=true]:bg-primary/15 data-[active=true]:text-primary"
+                            className="flex h-12 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-border/70 text-xs font-medium transition-colors hover:border-border disabled:cursor-not-allowed disabled:opacity-40 data-[active=true]:border-foreground data-[active=true]:bg-foreground/5 data-[active=true]:text-foreground"
                             aria-label="Upvote"
                           >
-                            <ArrowBigUp data-active={voted} className="h-5 w-5 data-[active=true]:fill-current" />
+                            <ArrowBigUp data-active={voted} className="h-4 w-4 data-[active=true]:fill-current" />
                             {q.upvotes}
                           </button>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm leading-relaxed text-foreground">{q.content}</p>
-                            <p className="mt-2 text-xs text-muted-foreground">— {q.user?.name ?? 'Anonymous'}</p>
+                            <p className="text-sm leading-relaxed">{q.content}</p>
+                            <p className="mt-1.5 text-xs text-muted-foreground">
+                              {q.user?.name ?? 'Anonymous'}
+                            </p>
                           </div>
                         </li>
                       );
                     })}
                     {sortedQuestions.length === 0 && (
-                      <li className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-                        Be the first to ask a question.
+                      <li className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                        No questions yet. Be the first to ask.
                       </li>
                     )}
                   </ul>
-                </div>
+                </>
               )}
             </div>
           )}
