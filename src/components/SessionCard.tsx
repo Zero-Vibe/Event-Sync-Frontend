@@ -89,10 +89,10 @@ export function SessionCard({
       {speakers.length > 0 && (
         <div className="flex items-center gap-2 pt-1">
           {speakers.slice(0, 3).map((s) =>
-            s.pictureUrl ? (
+            s["base64Picture"] ? (
               <img
                 key={s.id}
-                src={s.pictureUrl}
+                src={s["base64Picture"]}
                 alt={s.firstName ?? ''}
                 className="h-5 w-5 rounded-full border border-border object-cover"
               />
