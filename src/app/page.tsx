@@ -32,8 +32,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid opacity-40" aria-hidden />
-        <div className="absolute inset-0 bg-radial-violet" aria-hidden />
+        <div className="absolute inset-0 bg-grid opacity-10 dark:opacity-40" aria-hidden />
+        <div className="absolute inset-0 bg-radial-violet opacity-25" aria-hidden />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-background" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-4 pb-24 pt-20 sm:px-6 lg:px-8 lg:pt-28">
           <div className="mx-auto max-w-3xl text-center">
@@ -108,7 +108,7 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-linear-to-br from-primary/15 via-card to-card p-10 sm:p-16">
-          <div className="absolute inset-0 bg-grid opacity-30" aria-hidden />
+          <div className="absolute inset-0 bg-grid opacity-[0.075] dark:opacity-30" aria-hidden />
           <div className="relative mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Ready to run your next event?</h2>
             <p className="mt-4 text-muted-foreground">Join thousands of organizers using EventSync to create memorable experiences.</p>

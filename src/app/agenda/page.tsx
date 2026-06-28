@@ -76,7 +76,7 @@ export default function AgendaPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-50" aria-hidden />
+        <div className="absolute inset-0 bg-radial-violet opacity-[0.125] dark:opacity-50" aria-hidden />
         <div className="relative mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
           <p className="text-sm font-medium text-primary">Personal</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">

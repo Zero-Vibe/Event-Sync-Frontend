@@ -50,7 +50,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-60" aria-hidden />
+        <div className="absolute inset-0 bg-radial-violet opacity-15 dark:opacity-60" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <p className="text-sm font-medium text-primary">Browse</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">All events</h1>

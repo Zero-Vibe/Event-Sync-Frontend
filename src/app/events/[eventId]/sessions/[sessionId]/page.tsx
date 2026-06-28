@@ -144,8 +144,8 @@ export default function SessionDetailPage({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section className="relative overflow-hidden border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-70" aria-hidden />
-        <div className="absolute inset-0 bg-grid opacity-20" aria-hidden />
+        <div className="absolute inset-0 bg-radial-violet opacity-[0.175] dark:opacity-70" aria-hidden />
+        <div className="absolute inset-0 bg-grid opacity-5 dark:opacity-20" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <Link
             href={`/events/${eventId}`}
