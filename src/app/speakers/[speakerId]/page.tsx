@@ -75,12 +75,6 @@ export default function SpeakerDetailPage({
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        {speaker.biography && (
-          <>
-            <h2 className="text-xl font-semibold tracking-tight">Bio</h2>
-            <p className="mt-3 leading-relaxed text-muted-foreground">{speaker.biography}</p>
-          </>
-        )}
         {sessions.length > 0 && (
           <>
             <h2 className="mt-12 text-xl font-semibold tracking-tight">Sessions</h2>
