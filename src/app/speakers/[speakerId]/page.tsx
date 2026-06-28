@@ -43,9 +43,9 @@ export default function SpeakerDetailPage({
           </Link>
 
           <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center">
-            {speaker.pictureUrl ? (
+            {speaker["base64Picture"] ? (
               <img
-                src={speaker.pictureUrl}
+                src={speaker["base64Picture"]}
                 alt={speaker.firstName}
                 className="h-20 w-20 rounded-xl object-cover"
               />

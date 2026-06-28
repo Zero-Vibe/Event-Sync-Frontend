@@ -197,9 +197,9 @@ export default function EventDetailPage({
                   href={`/speakers/${s.id}`}
                   className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:bg-accent/40"
                 >
-                  {s.pictureUrl ? (
+                  {s["base64Picture"] ? (
                     <img
-                      src={s.pictureUrl}
+                      src={s["base64Picture"]}
                       alt={s.firstName ?? ''}
                       className="h-10 w-10 rounded-full object-cover"
                     />
