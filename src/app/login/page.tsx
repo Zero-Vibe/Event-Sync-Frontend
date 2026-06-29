@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/src/stores/auth.store';
+import { useToastStore } from '@/src/stores/toast.store';
 import { login } from '@/src/api/auth';
 
 export default function LoginPage() {
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const addToast = useToastStore((s) => s.addToast);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,9 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       const e = err as { message?: string; status?: number };
-      setError(e?.message ?? 'Invalid email or password.');
+      const msg = e?.message ?? 'Invalid email or password.';
+      setError(msg);
+      addToast(msg);
     } finally {
       setLoading(false);
     }

@@ -2,10 +2,12 @@
 
 import { useAuthStore } from '@/src/stores/auth.store'
 import { useRegistrationStore } from '@/src/stores/registration.store'
+import { useToastStore } from '@/src/stores/toast.store'
 
 export function RegisterButton({ eventId, sessionId }: { eventId: string; sessionId: string }) {
   const { token } = useAuthStore()
   const { toggle, isRegistered } = useRegistrationStore()
+  const addToast = useToastStore((s) => s.addToast)
 
   const handleRegister = async () => {
     const response = await fetch(`/api/events/${eventId}/sessions/${sessionId}/register/`, {
@@ -15,7 +17,12 @@ export function RegisterButton({ eventId, sessionId }: { eventId: string; sessio
         Authorization: token ? `Bearer ${token}` : "",
       }
     })
-    if (response.ok) toggle(sessionId)
+    if (response.ok) { toggle(sessionId) }
+    else if ([400, 401, 404, 409].includes(response.status)) {
+      const { message } = await response.json();
+      addToast(`Failed to register${message ? (": " + message) : ""}`)
+    }
+    else { addToast('Failed to register') }
   }
 
   const handleUnregister = async () => {
@@ -26,7 +33,12 @@ export function RegisterButton({ eventId, sessionId }: { eventId: string; sessio
         Authorization: token ? `Bearer ${token}` : "",
       }
     })
-    if (response.ok) toggle(sessionId)
+    if (response.ok) { toggle(sessionId)}
+    else if ([400, 401, 404].includes(response.status)) {
+      const { message } = await response.json();
+      addToast(`Failed to unregister${message ? (": " + message) : ""}`)
+    }
+    else { addToast('Failed to unregister') }
   }
 
   const registered = isRegistered(sessionId)
