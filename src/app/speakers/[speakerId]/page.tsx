@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { SessionCard } from '@/src/components/SessionCard';
-import { Session, SpeakerLink } from '@/src/types';
+import { SpeakerSessions } from './(components)/SpeakerSessions';
+import { Speaker, SpeakerLink } from '@/src/types';
 import { cacheLife } from 'next/cache';
 
 export default async function SpeakerDetailPage({
   params,
 }: {
-  params: Promise<{ speakerId: string }>;
+  params: Promise<{ speakerId: string }>
 }) {
   cacheLife({ stale: 60 * 60 * 24, revalidate: 60 * 60 * 12, expire: 60 * 60 * 24 * 7 })
   const { speakerId } = await params;
@@ -81,21 +81,13 @@ export default async function SpeakerDetailPage({
           </div>
         )}
 
-        {sessions.length > 0 && (
-          <div>
-            <h2 className="text-base font-semibold">Sessions</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {sessions.map((s: Session) => (
-                <SessionCard
-                  key={s.id}
-                  session={s}
-                  eventId={(s as { eventId?: string }).eventId ?? ''}
-                />
-              ))}
-            </div>
+        <div>
+          <h2 className="text-base font-semibold">Sessions</h2>
+          <div className="mt-4">
+            <SpeakerSessions speakerId={speakerId} />
           </div>
-        )}
+        </div>
       </section>
     </div>
-  );
+  )
 }
