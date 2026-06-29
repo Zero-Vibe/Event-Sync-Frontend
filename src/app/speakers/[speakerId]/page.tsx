@@ -1,31 +1,23 @@
-'use client';
+'use cache'
 
-import { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { SessionCard } from '@/src/components/SessionCard';
-import { PageLoader, ErrorMessage } from '@/src/components/ui';
-import { useApi } from '@/src/hooks/useApi';
-import { getSpeaker } from '@/src/api/speakers';
+import { Session, SpeakerLink } from '@/src/types';
+import { cacheLife } from 'next/cache';
 
-export default function SpeakerDetailPage({
+export default async function SpeakerDetailPage({
   params,
 }: {
   params: Promise<{ speakerId: string }>;
 }) {
-  const { speakerId } = use(params);
-  const { data: speaker, loading, error } = useApi(
-    () => getSpeaker(speakerId),
-    [speakerId]
-  );
+  cacheLife({ stale: 60 * 60 * 24, revalidate: 60 * 60 * 12, expire: 60 * 60 * 24 * 7 })
+  const { speakerId } = await params;
 
-  if (loading) return <PageLoader />;
-  if (error)
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <ErrorMessage message={error} />
-      </div>
-    );
+  const speakerRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/speakers/${speakerId}`);
+  if (!speakerRes.ok) throw new Error("Failed to fetch speaker");
+
+  const speaker = await speakerRes.json();
   if (!speaker) return null;
 
   const sessions = speaker.sessions ?? [];
@@ -61,7 +53,7 @@ export default function SpeakerDetailPage({
               </h1>
               {speaker.links && speaker.links.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {speaker.links.map((link) => (
+                  {speaker.links.map((link: SpeakerLink) => (
                     <a
                       key={link.id}
                       href={link.url}
@@ -93,7 +85,7 @@ export default function SpeakerDetailPage({
           <div>
             <h2 className="text-base font-semibold">Sessions</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {sessions.map((s) => (
+              {sessions.map((s: Session) => (
                 <SessionCard
                   key={s.id}
                   session={s}

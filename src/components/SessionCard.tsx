@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { Clock, MapPin, Bookmark } from 'lucide-react';
+import { Clock, MapPin } from 'lucide-react';
 import type { Session, SessionSummary } from '../types';
 import { isLive, isEnded } from '../types';
 import { formatTime } from '../utils/format';
 import { LiveBadge } from './LiveBadge';
-import { useFavoritesStore } from '../stores/favorite.store';
+import BookmarkButton from './BookmarkButton';
 
 type AnySession = Session | SessionSummary;
 
@@ -27,15 +27,6 @@ export function SessionCard({
   const speakers   = session.speakers ?? [];
   const description = 'description' in session ? (session as Session).description : undefined;
 
-  const { toggle, isFavorite } = useFavoritesStore();
-  const saved = isFavorite(id);
-
-  const handleBookmark = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggle(id);
-  };
-
   return (
     <Link
       href={`/events/${eventId}/sessions/${id}`}
@@ -43,18 +34,7 @@ export function SessionCard({
       data-ended={ended}
       className="group relative flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-sm data-[live=true]:border-[color-mix(in_oklab,var(--live)_35%,transparent)]"
     >
-      {/* Bookmark button */}
-      <button
-        onClick={handleBookmark}
-        aria-label={saved ? 'Remove from agenda' : 'Save to agenda'}
-        data-saved={saved}
-        className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground data-[saved=true]:text-foreground"
-      >
-        <Bookmark
-          className="h-4 w-4 transition-all"
-          fill={saved ? 'currentColor' : 'none'}
-        />
-      </button>
+      <BookmarkButton sessionId={id} />
 
       <div className="flex items-center gap-2 pr-8">
         {live && <LiveBadge />}
