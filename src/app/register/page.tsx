@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/src/stores/auth.store';
+import { useToastStore } from '@/src/stores/toast.store';
 import { register } from '@/src/api/auth';
 
 export default function RegisterPage() {
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const addToast = useToastStore((s) => s.addToast);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +32,9 @@ export default function RegisterPage() {
       }
     } catch (err: unknown) {
       const e = err as { message?: string; status?: number };
-      if (e?.status === 409) {
-        setError('Email already in use.');
-      } else {
-        setError(e?.message ?? 'Something went wrong.');
-      }
+      const msg = e?.status === 409 ? 'Email already in use.' : (e?.message ?? 'Something went wrong.');
+      setError(msg);
+      addToast(msg);
     } finally {
       setLoading(false);
     }

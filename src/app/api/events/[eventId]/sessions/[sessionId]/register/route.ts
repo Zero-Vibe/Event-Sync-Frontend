@@ -19,13 +19,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
 
         return Response.json({ count: data }, { status: 200 });
     } catch (err) {
-        return Response.json({ message:  err }, { status: 500 });
+        return Response.json({ message: 'Failed to get registration count' }, { status: 500 });
     }
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ eventId: string, sessionId: string }> }) {
     const requestHeaders = await headers()
-    const authorization = requestHeaders.get("Authorization")
+    const authorization = requestHeaders.get("Authorization") || ""
     const { eventId, sessionId } = await params;
 
     try {
@@ -33,7 +33,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                authorization
+                Authorization: authorization
             }
         })
 
@@ -58,7 +58,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ e
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
-                authorization
+                Authorization: authorization
             }
         })
 

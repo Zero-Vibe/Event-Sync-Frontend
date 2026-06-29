@@ -8,6 +8,7 @@ import { useSessionWebSocket } from '@/src/hooks/useSessionWebSocket'
 import { getQuestions, createQuestion, voteQuestion } from '@/src/api/questions'
 import type { Question } from '@/src/types'
 import { useAuthStore } from '@/src/stores/auth.store'
+import { useToastStore } from '@/src/stores/toast.store'
 
 export function QnASection({ eventId, sessionId, live, upcoming }: { eventId: string; sessionId: string; live: boolean; upcoming: boolean }) {
   const [questions, setQuestions] = useState<Question[]>([])
@@ -17,6 +18,7 @@ export function QnASection({ eventId, sessionId, live, upcoming }: { eventId: st
   const [submitting, setSubmitting] = useState(false)
 
   const { isAuthenticated, token } = useAuthStore()
+  const addToast = useToastStore((s) => s.addToast)
 
   const { data: fetchedQuestions } = useApi(
     () =>
@@ -72,6 +74,7 @@ export function QnASection({ eventId, sessionId, live, upcoming }: { eventId: st
       setVotedIds((prev) => new Set(prev).add(q.id))
       setText('')
     } catch {
+      addToast('Failed to post question.')
     } finally {
       setSubmitting(false)
     }
@@ -101,6 +104,7 @@ export function QnASection({ eventId, sessionId, live, upcoming }: { eventId: st
         prev.map((q) => (q.id === qId ? { ...q, upvotes: newUpvotes } : q))
       )
     } catch {
+      addToast('Failed to register vote.')
       setVotedIds((prev) => {
         const next = new Set(prev)
         if (alreadyVoted) next.add(qId)

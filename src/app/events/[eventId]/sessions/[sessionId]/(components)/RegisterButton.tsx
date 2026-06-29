@@ -2,10 +2,12 @@
 
 import { useAuthStore } from '@/src/stores/auth.store'
 import { useRegistrationStore } from '@/src/stores/registration.store'
+import { useToastStore } from '@/src/stores/toast.store'
 
 export function RegisterButton({ eventId, sessionId }: { eventId: string; sessionId: string }) {
   const { token } = useAuthStore()
   const { toggle, isRegistered } = useRegistrationStore()
+  const addToast = useToastStore((s) => s.addToast)
 
   const handleRegister = async () => {
     const response = await fetch(`/api/events/${eventId}/sessions/${sessionId}/register/`, {
@@ -16,6 +18,7 @@ export function RegisterButton({ eventId, sessionId }: { eventId: string; sessio
       }
     })
     if (response.ok) toggle(sessionId)
+    else addToast('Failed to register.')
   }
 
   const handleUnregister = async () => {
@@ -27,6 +30,7 @@ export function RegisterButton({ eventId, sessionId }: { eventId: string; sessio
       }
     })
     if (response.ok) toggle(sessionId)
+    else addToast('Failed to unregister.')
   }
 
   const registered = isRegistered(sessionId)

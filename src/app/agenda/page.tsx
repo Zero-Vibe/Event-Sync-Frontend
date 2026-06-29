@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useToastStore } from '@/src/stores/toast.store';
 import Link from 'next/link';
 import { CalendarHeart, Trash2 } from 'lucide-react';
 import { SessionCard } from '@/src/components/SessionCard';
@@ -8,7 +9,7 @@ import { formatDate } from '@/src/utils/format';
 import { useFavoritesStore } from '@/src/stores/favorite.store';
 import { getEvents } from '@/src/api/events';
 import { getSessions } from '@/src/api/sessions';
-import { PageLoader, ErrorMessage } from '@/src/components/ui';
+import { PageLoader } from '@/src/components/ui';
 import type { Session } from '@/src/types';
 
 /**
@@ -20,6 +21,7 @@ import type { Session } from '@/src/types';
  */
 export default function AgendaPage() {
   const { sessionIds, toggle } = useFavoritesStore();
+  const addToast = useToastStore((s) => s.addToast);
 
   const [sessions, setSessions] = useState<(Session & { eventId: string })[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -51,8 +53,11 @@ export default function AgendaPage() {
 
         if (!cancelled) setSessions(all);
       } catch (err) {
-        if (!cancelled)
-          setError(err instanceof Error ? err.message : 'Failed to load sessions.');
+        const msg = err instanceof Error ? err.message : 'Failed to load sessions.';
+        if (!cancelled) {
+          setError(msg);
+          addToast(msg);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -89,12 +94,6 @@ export default function AgendaPage() {
 
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         {loading && <PageLoader />}
-
-        {!loading && error && (
-          <div className="mx-auto max-w-md">
-            <ErrorMessage message={error} />
-          </div>
-        )}
 
         {!loading && !error && sessionIds.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-16 text-center">
