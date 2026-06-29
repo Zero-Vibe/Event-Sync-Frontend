@@ -9,7 +9,7 @@ import { formatDate } from '@/src/utils/format';
 import { useFavoritesStore } from '@/src/stores/favorite.store';
 import { getEvents } from '@/src/api/events';
 import { getSessions } from '@/src/api/sessions';
-import { PageLoader } from '@/src/components/ui';
+import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import type { Session } from '@/src/types';
 
 /**
@@ -94,6 +94,12 @@ export default function AgendaPage() {
 
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         {loading && <PageLoader />}
+
+        {error && (
+          <div className="mx-auto max-w-md">
+            <ErrorMessage message={error} />
+          </div>
+        )}
 
         {!loading && !error && sessionIds.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-16 text-center">

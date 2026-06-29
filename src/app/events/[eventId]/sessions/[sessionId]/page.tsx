@@ -10,6 +10,7 @@ import { RegisterButton } from './(components)/RegisterButton'
 import { RegistrationCount } from './(components)/RegistrationCount'
 import { QnASection } from './(components)/QnASection'
 import { cacheLife } from 'next/cache'
+import NotFound from '@/src/app/not-found'
 
 export default async function SessionPage({ params }: { params: Promise<{ eventId: string; sessionId: string }> }) {
   cacheLife({ stale: 60 * 60 * 12, revalidate: 60 * 60, expire: 60 * 60 * 24 * 2 })
@@ -22,9 +23,9 @@ export default async function SessionPage({ params }: { params: Promise<{ eventI
     fetch(`${baseUrl}/events/${eventId}`),
   ])
 
-  if (!sessionRes.ok) throw new Error('Failed to load session')
-
+  if (!sessionRes.ok && sessionRes.status != 404) { throw new Error('Failed to load session') }
   const session: Session = await sessionRes.json()
+  if (sessionRes.status === 404) return (<NotFound />)
   const event: Event | null = eventRes.ok ? await eventRes.json() : null
 
   const live = isLive(session.startTime, session.endTime)

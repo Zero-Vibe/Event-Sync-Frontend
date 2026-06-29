@@ -50,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ eve
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ eventId: string, sessionId: string }> }) {
     const requestHeaders = await headers()
-    const authorization = requestHeaders.get("Authorization")
+    const authorization = requestHeaders.get("Authorization") || ""
     const { eventId, sessionId } = await params;
 
     try {
