@@ -13,13 +13,13 @@ export default async function RoomDetailPage({
   params: Promise<{ roomId: string }>;
 }) {
   cacheLife({ stale: 60 * 60 * 12, revalidate: 60 * 60 * 3, expire: 60 * 60 * 24 })
-  
+
   const { roomId } = await params;
   const roomRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rooms/${roomId}`)
 
   if (!roomRes.ok) throw new Error("Failed to fetch room");
   const room = await roomRes.json();
-  
+
   if (!room) return null;
 
   const sessions = room.sessions ?? [];
@@ -35,9 +35,6 @@ export default async function RoomDetailPage({
     byDay.get(day)!.push(s);
   }
 
-  const eventId = sessions[0]
-    ? (sessions[0] as SessionSummary & { eventId?: string }).eventId ?? ''
-    : '';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -72,7 +69,9 @@ export default async function RoomDetailPage({
                   <SessionCard
                     key={s.id}
                     session={s}
-                    eventId={eventId}
+                    eventId={s
+                      ? (s as SessionSummary & { eventId?: string }).eventId ?? ''
+                      : ''}
                   />
                 ))}
               </div>
