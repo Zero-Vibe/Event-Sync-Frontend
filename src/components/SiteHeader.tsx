@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuthStore } from '../stores/auth.store';
 
 export function SiteHeader() {
@@ -41,6 +41,7 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-6 md:flex">
           {navItem('/events', 'Events')}
           {navItem('/rooms', 'Rooms')}
+          {navItem('/speakers', 'Speakers')}
           {navItem('/agenda', 'Agenda')}
         </nav>
 
