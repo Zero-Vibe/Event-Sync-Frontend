@@ -1,25 +1,37 @@
 import Link from 'next/link';
 import { CalendarDays, MapPin } from 'lucide-react';
 import type { Event } from '../types';
+import { isLive } from '../types';
 import { formatDateRange } from '../utils/format';
+import { LiveBadge } from './LiveBadge';
 
 export function EventCard({ event }: { event: Event }) {
+  const hasLive = event.sessions?.some((s) => isLive(s.startTime, s.endTime));
+
   return (
     <Link
       href={`/events/${event.id}`}
-      className="card-hover group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-sm"
     >
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <CalendarDays className="h-3.5 w-3.5" />
-          {formatDateRange(event.startDateTime, event.endDateTime)}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {formatDateRange(event.startDateTime, event.endDateTime)}
+          </div>
+          {hasLive && <LiveBadge />}
         </div>
-        <h3 className="text-lg font-semibold leading-snug tracking-tight">{event.title}</h3>
+        <h3 className="text-base font-semibold leading-snug tracking-tight">
+          {event.title}
+        </h3>
         {event.description && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {event.description}
+          </p>
         )}
-        <div className="mt-auto flex items-center border-t border-border/60 pt-4 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{event.location}</span>
+        <div className="mt-auto flex items-center gap-1.5 border-t border-border/60 pt-4 text-xs text-muted-foreground">
+          <MapPin className="h-3.5 w-3.5" />
+          {event.location}
         </div>
       </div>
     </Link>

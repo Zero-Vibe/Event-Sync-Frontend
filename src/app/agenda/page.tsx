@@ -75,14 +75,13 @@ export default function AgendaPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <section className="relative border-b border-border/60">
-        <div className="absolute inset-0 bg-radial-violet opacity-[0.125] dark:opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-          <p className="text-sm font-medium text-primary">Personal</p>
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+          <p className="text-sm font-medium text-muted-foreground">Personal</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
             My agenda
           </h1>
-          <p className="mt-3 max-w-xl text-muted-foreground">
+          <p className="mt-3 max-w-xl text-muted-foreground text-sm">
             Your saved sessions, sorted by start time.
           </p>
         </div>
@@ -106,7 +105,7 @@ export default function AgendaPage() {
             </p>
             <Link
               href="/events"
-              className="mt-6 inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:brightness-110"
+              className="mt-6 inline-flex h-10 items-center rounded-md bg-foreground px-5 text-sm font-semibold text-background hover:opacity-80"
             >
               Browse events
             </Link>
@@ -124,7 +123,7 @@ export default function AgendaPage() {
           <div className="space-y-12">
             {Array.from(byDay.entries()).map(([day, list]) => (
               <div key={day}>
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {day}
                 </h2>
                 <div className="mt-4 space-y-3">

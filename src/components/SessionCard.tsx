@@ -8,8 +8,6 @@ import { useFavoritesStore } from '../stores/favorite.store';
 
 type AnySession = Session | SessionSummary;
 
-
-
 export function SessionCard({
   session,
   eventId,
@@ -43,42 +41,46 @@ export function SessionCard({
       href={`/events/${eventId}/sessions/${id}`}
       data-live={live}
       data-ended={ended}
-      className="card-hover group relative flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-5 data-[live=true]:ring-1 data-[live=true]:ring-[color-mix(in_oklab,var(--live)_45%,transparent)]"
+      className="group relative flex flex-col gap-2 rounded-xl border border-border/70 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-sm data-[live=true]:border-[color-mix(in_oklab,var(--live)_35%,transparent)]"
     >
+      {/* Bookmark button */}
       <button
         onClick={handleBookmark}
         aria-label={saved ? 'Remove from agenda' : 'Save to agenda'}
         data-saved={saved}
-        className="absolute right-4 top-4 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground data-[saved=true]:text-foreground"
+        className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground data-[saved=true]:text-foreground"
       >
-        <Bookmark className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} />
+        <Bookmark
+          className="h-4 w-4 transition-all"
+          fill={saved ? 'currentColor' : 'none'}
+        />
       </button>
 
-      <div className="flex flex-wrap items-center gap-2 pr-8">
+      <div className="flex items-center gap-2 pr-8">
         {live && <LiveBadge />}
         {!live && ended && (
-          <span className="inline-flex items-center rounded-full border border-border/60 px-2 py-0.5 text-xs text-muted-foreground">Ended</span>
+          <span className="inline-flex items-center rounded-full border border-border/60 px-2 py-0.5 text-xs text-muted-foreground">
+            Ended
+          </span>
         )}
       </div>
 
-      <h3 data-compact={compact} className="font-semibold leading-snug tracking-tight data-[compact=true]:text-base data-[compact=false]:text-lg pr-8">
-        {title}
-      </h3>
+      <h3 className="pr-8 font-medium leading-snug tracking-tight text-sm">{title}</h3>
 
       {!compact && description && (
-        <p className="line-clamp-2 text-sm text-muted-foreground">{description}</p>
+        <p className="line-clamp-2 text-xs text-muted-foreground">{description}</p>
       )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         {startTime && endTime && (
           <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className="h-3 w-3" />
             {formatTime(startTime)} – {formatTime(endTime)}
           </span>
         )}
         {room && (
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5" />
+            <MapPin className="h-3 w-3" />
             {room.name}
           </span>
         )}
@@ -86,17 +88,23 @@ export function SessionCard({
 
       {speakers.length > 0 && (
         <div className="flex items-center gap-2 pt-1">
-          <div className="flex -space-x-2">
-            {speakers.slice(0, 3).map((s) =>
-              s["base64Picture"] ? (
-                <img key={s.id} src={s["base64Picture"]} alt={s.firstName ?? ''} className="h-6 w-6 rounded-full border-2 border-card object-cover" />
-              ) : (
-                <div key={s.id} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-muted text-[9px] font-medium">
-                  {(s.firstName?.[0] ?? '') + (s.lastName?.[0] ?? '')}
-                </div>
-              )
-            )}
-          </div>
+          {speakers.slice(0, 3).map((s) =>
+            s["base64Picture"] ? (
+              <img
+                key={s.id}
+                src={s["base64Picture"]}
+                alt={s.firstName ?? ''}
+                className="h-5 w-5 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <div
+                key={s.id}
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-muted text-[9px] font-medium"
+              >
+                {(s.firstName?.[0] ?? '') + (s.lastName?.[0] ?? '')}
+              </div>
+            )
+          )}
           <span className="text-xs text-muted-foreground">
             {speakers.map((s) => s.firstName).join(', ')}
           </span>
