@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Session, Question } from '@/src/types'
 import { formatDate } from '@/src/utils/format'
 import { isLive } from '@/src/types'
+import { useToastStore } from '@/src/stores/toast.store'
 import { SessionCardWithQuestions } from './SessionCardWithQuestions'
 
 const PAGE_SIZE = 6
@@ -14,9 +15,12 @@ export function SpeakerSessions({ speakerId }: { speakerId: string }) {
   const [allSessions, setAllSessions] = useState<Session[]>([])
   const [questions, setQuestions] = useState<Record<string, Question[]>>({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const addToast = useToastStore((s) => s.addToast)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     fetch(`/api/speakers/${speakerId}/sessions`)
       .then((r) => {
         if (!r.ok) throw new Error('Failed to fetch sessions')
@@ -40,6 +44,11 @@ export function SpeakerSessions({ speakerId }: { speakerId: string }) {
           })
         )
         setQuestions(Object.fromEntries(questionsResults))
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : 'Failed to load sessions.'
+        setError(msg)
+        addToast(msg)
       })
       .finally(() => setLoading(false))
   }, [speakerId])
@@ -69,6 +78,10 @@ export function SpeakerSessions({ speakerId }: { speakerId: string }) {
     }
     return map
   }, [pagedSessions])
+
+  if (error) {
+    return <p className="text-sm text-destructive">Failed to load sessions.</p>
+  }
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading sessions...</p>

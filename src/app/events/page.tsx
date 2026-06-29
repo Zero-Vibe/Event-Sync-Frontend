@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { EventCard } from '@/src/components/EventCard';
-import { PageLoader } from '@/src/components/ui';
+import { PageLoader, ErrorMessage } from '@/src/components/ui';
 import { useApi } from '@/src/hooks/useApi';
 import { getEvents } from '@/src/api/events';
 
@@ -54,6 +54,8 @@ export default function EventsPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         {loading && <PageLoader />}
+
+        {error && <ErrorMessage message={error} />}
 
         {events && (
           <>
