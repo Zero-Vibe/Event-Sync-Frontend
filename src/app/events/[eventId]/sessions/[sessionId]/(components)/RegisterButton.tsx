@@ -33,7 +33,7 @@ export function RegisterButton({ eventId, sessionId }: { eventId: string; sessio
 
   return (
     <button
-      className={`inline-flex h-8 shrink-0 items-center rounded-md px-3 text-xs font-medium transition-colors ${
+      className={`inline-flex w-fit h-8 shrink-0 items-center rounded-md px-5 py-4 text-[13px] font-medium transition-colors ${
         registered
           ? "border border-border text-muted-foreground hover:border-destructive hover:text-destructive"
           : "bg-foreground text-background hover:opacity-80"

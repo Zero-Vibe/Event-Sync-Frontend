@@ -12,7 +12,7 @@ import { QnASection } from './(components)/QnASection'
 import { cacheLife } from 'next/cache'
 
 export default async function SessionPage({ params }: { params: Promise<{ eventId: string; sessionId: string }> }) {
-  cacheLife({ stale: 60 * 60 * 12, revalidate: 60 * 60, expire: 60 * 60 * 24 * 2 } )
+  cacheLife({ stale: 60 * 60 * 12, revalidate: 60 * 60, expire: 60 * 60 * 24 * 2 })
 
   const { eventId, sessionId } = await params
   const baseUrl = process.env.NEXT_PUBLIC_API_URL
@@ -57,9 +57,6 @@ export default async function SessionPage({ params }: { params: Promise<{ eventI
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               {session.title}
             </h1>
-            {!live && (
-              <RegisterButton eventId={eventId} sessionId={sessionId} />
-            )}
           </div>
 
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -67,6 +64,9 @@ export default async function SessionPage({ params }: { params: Promise<{ eventI
               <Clock className="h-4 w-4" />
               {formatTime(session.startTime)} – {formatTime(session.endTime)}
             </span>
+            {!live && (
+              <RegisterButton eventId={eventId} sessionId={sessionId} />
+            )}
             {session.room && (
               <Link
                 href={`/rooms/${session.room.id}`}
